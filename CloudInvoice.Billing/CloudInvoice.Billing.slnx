@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CloudInvoice.Billing.Api/CloudInvoice.Billing.Api.csproj" />
+  <Project Path="CloudInvoice.Billing.Application/CloudInvoice.Billing.Application.csproj" />
+  <Project Path="CloudInvoice.Billing.Domain/CloudInvoice.Billing.Domain.csproj" />
+  <Project Path="CloudInvoice.Billing.Infrastructure/CloudInvoice.Billing.Infrastructure.csproj" />
+</Solution>
