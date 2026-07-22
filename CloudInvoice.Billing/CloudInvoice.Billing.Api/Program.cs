@@ -1,4 +1,5 @@
 
+using CloudInvoice.Billing.Api.Middlewares;
 using CloudInvoice.Billing.Application.Interfaces;
 using CloudInvoice.Billing.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +15,7 @@ namespace CloudInvoice.Billing.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
 
             // Add services to the container.
 
@@ -96,6 +98,8 @@ namespace CloudInvoice.Billing.Api
             });
 
             var app = builder.Build();
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
