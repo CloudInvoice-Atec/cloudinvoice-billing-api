@@ -83,6 +83,8 @@ namespace CloudInvoice.Billing.Api
                 };
             });
 
+            builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+
             // 1. Lemos o URL da Catalog API que tu configuraste no appsettings.json
             var catalogApiUrl = builder.Configuration["ApiUrls:CatalogApi"];
 
