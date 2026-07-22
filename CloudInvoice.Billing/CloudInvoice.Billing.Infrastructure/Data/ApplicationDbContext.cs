@@ -31,12 +31,34 @@ namespace CloudInvoice.Billing.Infrastructure.Data
                 .HasForeignKey(l => l.InvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+
             // 1:N relationship between Customer and Invoice
             modelBuilder.Entity<Customer>()
                 .HasMany(c => c.Invoices)
                 .WithOne(i => i.Customer)
                 .HasForeignKey(i => i.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.TotalBase)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.TotalTax)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<InvoiceLine>()
+                .Property(il => il.UnitPrice)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<InvoiceLine>()
+                .Property(il => il.TaxRate)
+                .HasColumnType("decimal(18,2)");
+
         }
     }
 }

@@ -1,11 +1,16 @@
 
 using CloudInvoice.Billing.Application.Interfaces;
+using CloudInvoice.Billing.Application.Services;
+using CloudInvoice.Billing.Domain.Interfaces;
+using CloudInvoice.Billing.Infrastructure.Data;
+using CloudInvoice.Billing.Infrastructure.Repositories;
 using CloudInvoice.Billing.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace CloudInvoice.Billing.Api
 {
@@ -14,6 +19,16 @@ namespace CloudInvoice.Billing.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+            builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+            builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+            builder.Services.AddScoped<ICatalogIntegrationService, CatalogIntegrationService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
+            builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
             // Add services to the container.
 
@@ -86,7 +101,7 @@ namespace CloudInvoice.Billing.Api
             // 1. Lemos o URL da Catalog API que tu configuraste no appsettings.json
             var catalogApiUrl = builder.Configuration["ApiUrls:CatalogApi"];
 
-            builder.Services.AddHttpClient<ICatalogIntergrationService, CatalogIntegrationService>(client =>
+            builder.Services.AddHttpClient<ICatalogIntegrationService, CatalogIntegrationService>(client =>
             {
                 client.BaseAddress = new Uri(catalogApiUrl);
                 // Podes também configurar um Timeout para a chamada não ficar pendurada para sempre

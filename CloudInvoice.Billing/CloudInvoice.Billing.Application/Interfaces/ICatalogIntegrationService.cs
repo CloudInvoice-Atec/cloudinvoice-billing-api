@@ -10,7 +10,7 @@ namespace CloudInvoice.Billing.Application.Interfaces
     /// <summary>
     /// Serviço responsável por gerir a comunicação HTTP com a Catalog.API.
     /// </summary>
-    public interface ICatalogIntergrationService
+    public interface ICatalogIntegrationService
     {
         /// <summary>
         /// Verifica a disponibilidade e o preço de um artigo no Catálogo.
