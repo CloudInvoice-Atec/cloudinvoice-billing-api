@@ -9,9 +9,13 @@ namespace CloudInvoice.Billing.Domain.Interfaces
 {
     public interface ICompanyRepository
     {
-        Task<Company?> GetByIdAsync(Guid id);
-        Task<IEnumerable<Company>> GetByUserIdAsync(string userId);
+        Task<Company?> GetByIdAsync(int id);
         Task AddAsync(Company company);
         Task SaveChangesAsync();
+
+        Task<Company?> GetDefaultCompanyAsync();
+
+        // Let's also leave the Update method ready for your Admin UI later
+        Task UpdateAsync(Company company);
     }
 }

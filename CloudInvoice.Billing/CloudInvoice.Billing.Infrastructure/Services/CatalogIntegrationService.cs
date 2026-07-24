@@ -12,7 +12,7 @@ namespace CloudInvoice.Billing.Infrastructure.Services
     /// <summary>
     /// Implementação do serviço de integração com o Catálogo utilizando o IHttpClientFactory.
     /// </summary>
-    public class CatalogIntegrationService : ICatalogIntergrationService
+    public class CatalogIntegrationService : ICatalogIntegrationService
     {
         private readonly HttpClient _httpClient;
 

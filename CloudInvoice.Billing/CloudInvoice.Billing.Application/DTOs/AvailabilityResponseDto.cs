@@ -8,6 +8,7 @@ namespace CloudInvoice.Billing.Application.DTOs
 {
     public class AvailabilityResponseDto
     {
+        public string ProductName { get; set; } = string.Empty;
         public bool IsAvailable { get; set; }
         public decimal BasePrice { get; set; }
         public decimal TaxRate { get; set; }
