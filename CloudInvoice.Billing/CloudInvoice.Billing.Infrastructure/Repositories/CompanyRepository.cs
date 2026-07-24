@@ -15,7 +15,6 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
     {
         private readonly ApplicationDbContext _context;
 
-        // Dependency Injection of the EF Core DbContext
         public CompanyRepository(ApplicationDbContext context)
         {
             _context = context;
@@ -23,32 +22,22 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
 
         public async Task<Company?> GetByIdAsync(int id)
         {
-            // Vai à base de dados procurar uma empresa pelo seu ID único
-            return await _context.Companies.FirstOrDefaultAsync(c => c.Id == id);
+            return await _context.Set<Company>().FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task AddAsync(Company company)
         {
-            // Prepara a entidade para ser inserida na base de dados
-            await _context.Companies.AddAsync(company);
+            await _context.Set<Company>().AddAsync(company);
         }
 
-        public async Task SaveChangesAsync()
+        public void Update(Company company)
         {
-            // Executa efetivamente as alterações (Insert, Update, Delete) no SQL Server
-            await _context.SaveChangesAsync();
+            _context.Set<Company>().Update(company);
         }
 
-        public async Task<Company?> GetDefaultCompanyAsync()
+        public async Task<bool> SaveChangesAsync()
         {
-            // Assuming ID 1 is always our default issuer company
-            return await _context.Companies.FirstOrDefaultAsync(c => c.Id == 1);
-        }
-
-        public async Task UpdateAsync(Company company)
-        {
-            _context.Companies.Update(company);
-            await _context.SaveChangesAsync();
+            return (await _context.SaveChangesAsync()) > 0;
         }
     }
 }

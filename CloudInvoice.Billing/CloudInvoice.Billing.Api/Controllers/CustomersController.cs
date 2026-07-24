@@ -44,5 +44,43 @@ namespace CloudInvoice.Billing.Api.Controllers
 
             return Ok(customer);
         }
+
+
+
+        // PUT: api/customers/{id}
+        // Endpoint responsável por receber os dados alterados da UI e atualizar o registo
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> UpdateCustomer(Guid id, [FromBody] UpdateCustomerDto request)
+        {
+            try
+            {
+                var success = await _customerService.UpdateCustomerAsync(id, request);
+
+                if (!success)
+                {
+                    return NotFound(new { message = "Cliente não encontrado para atualização." });
+                }
+
+                // HTTP 204 No Content: Indica que a operação foi bem-sucedida e não requer corpo de resposta
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
+        // Endpoint GET para obter as últimas N faturas de um cliente
+        // Exemplo de chamada: GET /api/customers/{id}/invoices?count=5
+        [HttpGet("{id}/invoices")]
+        public async Task<IActionResult> GetCustomerInvoices(Guid id, [FromQuery] int count = 5)
+        {
+            var invoices = await _customerService.GetCustomerInvoicesAsync(id, count);
+
+            // Se o cliente não existir ou não tiver faturas, o serviço devolve vazio ou podemos validar
+            return Ok(invoices);
+        }
     }
 }

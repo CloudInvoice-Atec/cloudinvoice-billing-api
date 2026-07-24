@@ -29,6 +29,8 @@ namespace CloudInvoice.Billing.Api
             builder.Services.AddScoped<ICatalogIntegrationService, CatalogIntegrationService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+            builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+            builder.Services.AddScoped<ICompanyService, CompanyService>();
 
             // Add services to the container.
 
