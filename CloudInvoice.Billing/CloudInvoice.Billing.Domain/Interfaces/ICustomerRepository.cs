@@ -11,6 +11,7 @@ namespace CloudInvoice.Billing.Domain.Interfaces
     {
         Task<Customer?> GetByIdAsync(Guid id);
         Task AddAsync(Customer customer);
-        Task SaveChangesAsync();
+        void Update(Customer customer);
+        Task<bool> SaveChangesAsync();
     }
 }

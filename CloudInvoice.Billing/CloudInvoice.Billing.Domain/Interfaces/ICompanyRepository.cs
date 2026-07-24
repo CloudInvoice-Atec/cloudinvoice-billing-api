@@ -11,11 +11,8 @@ namespace CloudInvoice.Billing.Domain.Interfaces
     {
         Task<Company?> GetByIdAsync(int id);
         Task AddAsync(Company company);
-        Task SaveChangesAsync();
+        void Update(Company company);
+        Task<bool> SaveChangesAsync();
 
-        Task<Company?> GetDefaultCompanyAsync();
-
-        // Let's also leave the Update method ready for your Admin UI later
-        Task UpdateAsync(Company company);
     }
 }

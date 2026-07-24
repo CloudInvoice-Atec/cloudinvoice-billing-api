@@ -39,8 +39,8 @@ namespace CloudInvoice.Billing.Application.Services
                 throw new ArgumentException("Customer not found.");
             }
 
-            // 2. Fetch our Company details (Assuming ID 1 is our default company)
-            var company = await _companyRepository.GetDefaultCompanyAsync();
+            // 2. Fetch our Company details (Assumindo que a empresa principal tem o ID 1)
+            var company = await _companyRepository.GetByIdAsync(1);
             if (company == null)
             {
                 throw new InvalidOperationException("Company settings not configured.");
@@ -63,7 +63,8 @@ namespace CloudInvoice.Billing.Application.Services
                 CustomerTaxNumber = customer.TaxNumber,
                 CustomerAddress = customer.Address,
 
-                CompanyName = company.LegalName,
+                // Ajustado para as propriedades reais da entidade Company (Name em vez de LegalName)
+                CompanyName = company.Name,
                 CompanyTaxNumber = company.TaxNumber,
                 CompanyAddress = company.Address
             };
@@ -76,8 +77,6 @@ namespace CloudInvoice.Billing.Application.Services
 
                 if (!availability.IsAvailable)
                 {
-                    // In a real scenario, we might return a specific error or skip the item.
-                    // For now, we throw an exception to stop the process.
                     throw new InvalidOperationException($"Product {itemDto.ProductId} is not available.");
                 }
 
@@ -87,16 +86,16 @@ namespace CloudInvoice.Billing.Application.Services
                     Id = Guid.NewGuid(),
                     InvoiceId = invoice.Id,
                     ProductId = itemDto.ProductId,
-                    Description = availability.ProductName, // Assuming the DTO returns the name
+                    Description = availability.ProductName,
                     Quantity = itemDto.Quantity,
-                    UnitPrice = availability.BasePrice,     // Assuming the DTO returns the price
-                    TaxRate = availability.TaxRate          // Assuming the DTO returns the tax rate
+                    UnitPrice = availability.BasePrice,
+                    TaxRate = availability.TaxRate
                 };
 
                 invoice.Lines.Add(invoiceLine);
             }
 
-            // 5. Calculate Totals (Summing up the calculated properties from the Domain Entity)
+            // 5. Calculate Totals
             invoice.TotalBase = invoice.Lines.Sum(l => l.UnitPrice * l.Quantity);
             invoice.TotalTax = invoice.Lines.Sum(l => l.TaxAmount);
             invoice.TotalAmount = invoice.Lines.Sum(l => l.LineTotal);
@@ -122,11 +121,8 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<IEnumerable<InvoiceResponseDto>> GetUserInvoicesAsync(string userId)
         {
-            // 1. Fetch data from Repository (Returns Domain Entities)
             var invoices = await _invoiceRepository.GetByUserIdAsync(userId);
 
-            // 2. Map Entities to DTOs before returning them to the Controller
-            // We use LINQ Select to transform the list
             return invoices.Select(invoice => new InvoiceResponseDto
             {
                 Id = invoice.Id,
@@ -143,16 +139,13 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<InvoiceResponseDto?> GetInvoiceByIdAsync(Guid invoiceId)
         {
-            // 1. Fetch single invoice from Repository
             var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
 
-            // 2. Handle not found scenario
             if (invoice == null)
             {
                 return null;
             }
 
-            // 3. Map Entity to DTO
             return new InvoiceResponseDto
             {
                 Id = invoice.Id,
@@ -166,6 +159,5 @@ namespace CloudInvoice.Billing.Application.Services
                 TotalAmount = invoice.TotalAmount
             };
         }
-
     }
 }

@@ -21,7 +21,10 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
 
         public async Task<Customer?> GetByIdAsync(Guid id)
         {
-            return await _context.Set<Customer>().FirstOrDefaultAsync(c => c.Id == id);
+            // Incluímos as faturas para garantir que consultas relacionais funcionem perfeitamente
+            return await _context.Set<Customer>()
+                .Include(c => c.Invoices)
+                .FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task AddAsync(Customer customer)
@@ -29,9 +32,16 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
             await _context.Set<Customer>().AddAsync(customer);
         }
 
-        public async Task SaveChangesAsync()
+        // Método de atualização exigido pela camada de negócio
+        public void Update(Customer customer)
         {
-            await _context.SaveChangesAsync();
+            _context.Set<Customer>().Update(customer);
+        }
+
+        // Otimização para devolver um booleano indicando se a gravação teve sucesso
+        public async Task<bool> SaveChangesAsync()
+        {
+            return (await _context.SaveChangesAsync()) > 0;
         }
     }
 }
