@@ -19,23 +19,6 @@ namespace CloudInvoice.Billing.Application.Services
             _companyRepository = companyRepository;
         }
 
-        public async Task<CompanyResponseDto> CreateCompanyAsync(CreateCompanyDto request)
-        {
-            var company = new Company
-            {
-                Name = request.Name,
-                TaxNumber = request.TaxNumber,
-                PrimaryActivityCode = request.PrimaryActivityCode,
-                Email = request.Email,
-                Phone = request.Phone
-            };
-
-            await _companyRepository.AddAsync(company);
-            await _companyRepository.SaveChangesAsync();
-
-            return MapToDto(company);
-        }
-
         public async Task<CompanyResponseDto?> GetCompanyByIdAsync(int id)
         {
             var company = await _companyRepository.GetByIdAsync(id);

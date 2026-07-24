@@ -114,6 +114,8 @@ namespace CloudInvoice.Billing.Api
 
             var app = builder.Build();
 
+            ApplicationDbSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
