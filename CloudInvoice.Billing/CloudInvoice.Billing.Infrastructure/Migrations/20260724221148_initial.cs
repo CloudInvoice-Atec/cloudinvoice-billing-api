@@ -15,13 +15,24 @@ namespace CloudInvoice.Billing.Infrastructure.Migrations
                 name: "Companies",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TradeName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LegalName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TaxNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    PrimaryActivityCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Country = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Logo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Website = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RegistryOffice = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CommercialRegistrationNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ShareCapital = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Iban = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Swift = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -34,9 +45,26 @@ namespace CloudInvoice.Billing.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TradeName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TaxNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CurrentDebt = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    CreditLimit = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    TotalInvoiced = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    PaymentTermsDays = table.Column<int>(type: "int", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Website = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Country = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DefaultDiscount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ContactPersonName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContactPersonRole = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContactPersonEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContactPersonPhone = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {

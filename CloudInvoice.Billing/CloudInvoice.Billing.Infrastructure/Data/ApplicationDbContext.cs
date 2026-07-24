@@ -24,6 +24,12 @@ namespace CloudInvoice.Billing.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Diz ao EF Core que o ID da Company não é auto-incrementado pela BD,
+            // permitindo que o nosso Seeder insira o Id = 1 explicitamente com segurança.
+            modelBuilder.Entity<Company>()
+                .Property(c => c.Id)
+                .ValueGeneratedNever();
+
             // 1:N relationship between Invoice and InvoiceLine
             modelBuilder.Entity<Invoice>()
                 .HasMany(i => i.Lines)

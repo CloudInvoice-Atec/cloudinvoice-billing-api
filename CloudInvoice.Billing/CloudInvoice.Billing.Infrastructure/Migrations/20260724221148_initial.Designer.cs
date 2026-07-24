@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CloudInvoice.Billing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260722222405_initial")]
+    [Migration("20260724221148_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -28,29 +28,60 @@ namespace CloudInvoice.Billing.Infrastructure.Migrations
             modelBuilder.Entity("CloudInvoice.Billing.Domain.Entities.Company", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<string>("Address")
-                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CommercialRegistrationNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Iban")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Logo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LegalName")
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PrimaryActivityCode")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RegistryOffice")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ShareCapital")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Swift")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TaxNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TradeName")
-                        .IsRequired()
+                    b.Property<string>("Website")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -65,19 +96,68 @@ namespace CloudInvoice.Billing.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
+                    b.Property<string>("City")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactPersonEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactPersonName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactPersonPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactPersonRole")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("CreditLimit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("CurrentDebt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DefaultDiscount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("PaymentTermsDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("TaxNumber")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("TotalInvoiced")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TradeName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Website")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

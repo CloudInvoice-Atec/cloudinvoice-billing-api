@@ -16,12 +16,6 @@ namespace CloudInvoice.Billing.Api.Controllers
             _companyService = companyService;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<CompanyResponseDto>> Create([FromBody] CreateCompanyDto request)
-        {
-            var result = await _companyService.CreateCompanyAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<CompanyResponseDto>> GetById(int id)
