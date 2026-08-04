@@ -19,7 +19,7 @@ namespace CloudInvoice.Billing.Domain.Entities
         public string? PostalCode { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
-        public string? Logo { get; set; }
+        public string? Logo{ get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Website { get; set; }

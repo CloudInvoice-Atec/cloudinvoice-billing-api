@@ -1,5 +1,6 @@
 ﻿using CloudInvoice.Billing.Application.DTOs;
 using CloudInvoice.Billing.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ namespace CloudInvoice.Billing.Api.Controllers
 
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<CompanyResponseDto>> GetById(int id)
         {
             var company = await _companyService.GetCompanyByIdAsync(id);
