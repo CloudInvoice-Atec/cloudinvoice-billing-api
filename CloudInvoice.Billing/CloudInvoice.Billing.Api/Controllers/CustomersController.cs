@@ -91,5 +91,14 @@ namespace CloudInvoice.Billing.Api.Controllers
             var customers = await _customerService.GetAllCustomersAsync();
             return Ok(customers);
         }
+
+
+        // GET: api/customers/active
+        [HttpGet("active")]
+        public async Task<ActionResult<IEnumerable<CustomerResponseDto>>> GetActive()
+        {
+            var activeCustomers = await _customerService.GetAllActiveCustomersAsync();
+            return Ok(activeCustomers);
+        }
     }
 }

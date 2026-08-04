@@ -17,5 +17,7 @@ namespace CloudInvoice.Billing.Application.Interfaces
         Task<bool> UpdateCustomerAsync(Guid id, UpdateCustomerDto request);
 
         Task<IEnumerable<CustomerResponseDto>> GetAllCustomersAsync();
+
+        Task<IEnumerable<CustomerResponseDto>> GetAllActiveCustomersAsync();
     }
 }

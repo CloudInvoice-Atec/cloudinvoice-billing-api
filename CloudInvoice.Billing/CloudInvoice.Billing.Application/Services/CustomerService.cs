@@ -170,5 +170,40 @@ namespace CloudInvoice.Billing.Application.Services
                 ContactPersonPhone = c.ContactPersonPhone
             });
         }
+
+
+        public async Task<IEnumerable<CustomerResponseDto>> GetAllActiveCustomersAsync()
+        {
+            // 1. Vai buscar todos os clientes ao repositório
+            var customers = await _customerRepository.GetAllAsync();
+
+            // 2. Filtra apenas os ativos e mapeia para o DTO de resposta
+            return customers
+                .Where(c => c.IsActive)
+                .Select(c => new CustomerResponseDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    TradeName = c.TradeName,
+                    TaxId = c.TaxId,
+                    IsActive = c.IsActive,
+                    CurrentDebt = c.CurrentDebt,
+                    CreditLimit = c.CreditLimit,
+                    TotalInvoiced = c.TotalInvoiced,
+                    PaymentTermsDays = c.PaymentTermsDays,
+                    Email = c.Email,
+                    Phone = c.Phone,
+                    Address = c.Address,
+                    City = c.City,
+                    PostalCode = c.PostalCode,
+                    Country = c.Country,
+                    DefaultDiscount = c.DefaultDiscount,
+                    CreatedAt = c.CreatedAt,
+                    ContactPersonName = c.ContactPersonName,
+                    ContactPersonRole = c.ContactPersonRole,
+                    ContactPersonEmail = c.ContactPersonEmail,
+                    ContactPersonPhone = c.ContactPersonPhone
+                });
+        }
     }
 }
