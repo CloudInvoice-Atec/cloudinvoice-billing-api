@@ -10,7 +10,7 @@ namespace CloudInvoice.Billing.Application.DTOs
     public class CreateCustomerDto
     {
         public string Name { get; set; } = string.Empty;
-        public string TaxNumber { get; set; } = string.Empty;
+        public string TaxId { get; set; } = string.Empty;
         public string? ContactPersonName { get; set; }
         public string? ContactPersonEmail { get; set; }
         public bool IsActive { get; set; } = true;

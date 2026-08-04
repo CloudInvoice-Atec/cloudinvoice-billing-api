@@ -16,7 +16,7 @@ namespace CloudInvoice.Billing.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +31,7 @@ namespace CloudInvoice.Billing.Api
             builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
             builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
             builder.Services.AddScoped<ICompanyService, CompanyService>();
+
 
             // Add services to the container.
 
@@ -113,6 +114,22 @@ namespace CloudInvoice.Billing.Api
             });
 
             var app = builder.Build();
+
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<CloudInvoice.Billing.Infrastructure.Data.ApplicationDbContext>();
+                    await CloudInvoice.Billing.Infrastructure.Data.CustomerSeeder.SeedAsync(context);
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Ocorreu um erro ao popular a base de dados com o seeder de clientes.");
+                }
+            }
 
             ApplicationDbSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
 

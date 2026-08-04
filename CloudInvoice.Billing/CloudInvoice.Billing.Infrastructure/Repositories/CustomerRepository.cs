@@ -43,5 +43,12 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
         {
             return (await _context.SaveChangesAsync()) > 0;
         }
+
+
+
+        public async Task<IEnumerable<Customer>> GetAllAsync()
+        {
+            return await _context.Set<Customer>().ToListAsync();
+        }
     }
 }

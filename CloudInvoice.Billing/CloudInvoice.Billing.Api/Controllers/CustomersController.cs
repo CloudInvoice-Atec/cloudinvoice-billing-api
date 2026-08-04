@@ -82,5 +82,14 @@ namespace CloudInvoice.Billing.Api.Controllers
             // Se o cliente não existir ou não tiver faturas, o serviço devolve vazio ou podemos validar
             return Ok(invoices);
         }
+
+
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CustomerResponseDto>>> GetAll()
+        {
+            var customers = await _customerService.GetAllCustomersAsync();
+            return Ok(customers);
+        }
     }
 }

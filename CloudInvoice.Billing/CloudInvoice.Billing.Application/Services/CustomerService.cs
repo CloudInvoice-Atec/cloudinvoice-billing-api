@@ -26,7 +26,7 @@ namespace CloudInvoice.Billing.Application.Services
             {
                 Id = Guid.NewGuid(),
                 Name = request.Name,
-                TaxNumber = request.TaxNumber,
+                TaxId = request.TaxId,
                 ContactPersonName = request.ContactPersonName,
                 ContactPersonEmail = request.ContactPersonEmail,
                 IsActive = request.IsActive,
@@ -57,7 +57,7 @@ namespace CloudInvoice.Billing.Application.Services
                 Id = customer.Id,
                 Name = customer.Name,
                 TradeName = customer.TradeName,
-                TaxNumber = customer.TaxNumber,
+                TaxId = customer.TaxId,
                 Email = customer.Email,
                 Phone = customer.Phone,
                 Address = customer.Address,
@@ -108,24 +108,67 @@ namespace CloudInvoice.Billing.Application.Services
                 return false; // Cliente não encontrado
             }
 
-            // Atualizamos as propriedades da entidade com os dados vindos do DTO
             customer.Name = request.Name;
             customer.TradeName = request.TradeName;
-            customer.TaxNumber = request.TaxNumber;
+            customer.TaxId = request.TaxId; 
+            customer.IsActive = request.IsActive;
+
+            customer.CreditLimit = request.CreditLimit;
+            customer.PaymentTermsDays = request.PaymentTermsDays;
+            customer.DefaultDiscount = request.DefaultDiscount;
+
             customer.Email = request.Email;
             customer.Phone = request.Phone;
             customer.Address = request.Address;
             customer.City = request.City;
             customer.PostalCode = request.PostalCode;
             customer.Country = request.Country;
-            customer.DefaultDiscount = request.DefaultDiscount;
-            customer.IsActive = request.IsActive;
+
+            customer.ContactPersonName = request.ContactPersonName;
+            customer.ContactPersonRole = request.ContactPersonRole;
+            customer.ContactPersonEmail = request.ContactPersonEmail;
+            customer.ContactPersonPhone = request.ContactPersonPhone;
 
             // Atualizamos no repositório e guardamos as alterações
             _customerRepository.Update(customer); // (Certifica-te que o teu repositório tem o método Update ou usa a tracking do EF Core)
             await _customerRepository.SaveChangesAsync();
 
             return true;
+        }
+
+
+
+
+        public async Task<IEnumerable<CustomerResponseDto>> GetAllCustomersAsync()
+        {
+            // 1. Vai buscar os clientes à base de dados através do repositório
+            var customers = await _customerRepository.GetAllAsync();
+
+            // 2. Mapeia cada entidade do Domínio para o DTO de resposta da Aplicação
+            return customers.Select(c => new CustomerResponseDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                TradeName = c.TradeName,
+                TaxId = c.TaxId,
+                IsActive = c.IsActive,
+                CurrentDebt = c.CurrentDebt,
+                CreditLimit = c.CreditLimit,
+                TotalInvoiced = c.TotalInvoiced,
+                PaymentTermsDays = c.PaymentTermsDays,
+                Email = c.Email,
+                Phone = c.Phone,
+                Address = c.Address,
+                City = c.City,
+                PostalCode = c.PostalCode,
+                Country = c.Country,
+                DefaultDiscount = c.DefaultDiscount,
+                CreatedAt = c.CreatedAt,
+                ContactPersonName = c.ContactPersonName,
+                ContactPersonRole = c.ContactPersonRole,
+                ContactPersonEmail = c.ContactPersonEmail,
+                ContactPersonPhone = c.ContactPersonPhone
+            });
         }
     }
 }

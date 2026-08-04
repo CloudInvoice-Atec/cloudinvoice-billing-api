@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? TradeName { get; set; }
-        public string TaxNumber { get; set; } = string.Empty; // Equivalente ao TaxId da UI
+        public string TaxId { get; set; } = string.Empty; // Equivalente ao TaxId da UI
         public bool IsActive { get; set; } = true;
         public decimal? CurrentDebt { get; set; }
         public decimal? CreditLimit { get; set; }

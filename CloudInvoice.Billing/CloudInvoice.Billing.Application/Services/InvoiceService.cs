@@ -60,7 +60,7 @@ namespace CloudInvoice.Billing.Application.Services
 
                 // Data Immutability: Freezing the data at the time of purchase
                 CustomerName = customer.Name,
-                CustomerTaxNumber = customer.TaxNumber,
+                CustomerTaxNumber = customer.TaxId,
                 CustomerAddress = customer.Address,
 
                 // Ajustado para as propriedades reais da entidade Company (Name em vez de LegalName)

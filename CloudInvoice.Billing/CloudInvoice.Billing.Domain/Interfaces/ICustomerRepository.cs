@@ -13,5 +13,6 @@ namespace CloudInvoice.Billing.Domain.Interfaces
         Task AddAsync(Customer customer);
         void Update(Customer customer);
         Task<bool> SaveChangesAsync();
+        Task<IEnumerable<Customer>> GetAllAsync();
     }
 }
