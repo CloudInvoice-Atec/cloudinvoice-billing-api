@@ -13,5 +13,6 @@ namespace CloudInvoice.Billing.Application.Interfaces
         Task<InvoiceResponseDto> CreateInvoiceAsync(string userId, CreateInvoiceDto request);
         Task<IEnumerable<InvoiceResponseDto>> GetUserInvoicesAsync(string userId);
         Task<InvoiceResponseDto?> GetInvoiceByIdAsync(Guid invoiceId);
+        Task<PagedResultDto<InvoiceResponseDto>> GetAllInvoicesAsync(int pageNumber, int pageSize);
     }
 }

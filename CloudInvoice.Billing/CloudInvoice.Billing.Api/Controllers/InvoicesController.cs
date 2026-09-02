@@ -48,5 +48,20 @@ namespace CloudInvoice.Billing.Api.Controllers
 
             return Ok(invoice);
         }
+
+
+
+        // Exemplo de chamada HTTP: GET /api/invoices?pageNumber=1&pageSize=10
+        [HttpGet]
+        public async Task<ActionResult<PagedResultDto<InvoiceResponseDto>>> GetAllInvoices(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var pagedResult = await _invoiceService.GetAllInvoicesAsync(pageNumber, pageSize);
+
+            // Devolvemos um HTTP 200 OK contendo os metadados da paginação e a lista de faturas mapeadas em DTO
+            return Ok(pagedResult);
+        }
+
     }
 }
