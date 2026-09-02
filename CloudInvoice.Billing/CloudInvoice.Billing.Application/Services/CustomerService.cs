@@ -50,6 +50,7 @@ namespace CloudInvoice.Billing.Application.Services
         }
 
         // Método auxiliar privado para evitar duplicação de código no mapeamento
+        // Método auxiliar privado para evitar duplicação de código no mapeamento
         private static CustomerResponseDto MapToDto(Customer customer)
         {
             return new CustomerResponseDto
@@ -58,15 +59,24 @@ namespace CloudInvoice.Billing.Application.Services
                 Name = customer.Name,
                 TradeName = customer.TradeName,
                 TaxId = customer.TaxId,
+                IsActive = customer.IsActive,
+                CurrentDebt = customer.CurrentDebt,
+                CreditLimit = customer.CreditLimit,
+                TotalInvoiced = customer.TotalInvoiced,
+                PaymentTermsDays = customer.PaymentTermsDays,
                 Email = customer.Email,
                 Phone = customer.Phone,
+                Website = customer.Website,
                 Address = customer.Address,
                 City = customer.City,
                 PostalCode = customer.PostalCode,
                 Country = customer.Country,
                 DefaultDiscount = customer.DefaultDiscount,
-                IsActive = customer.IsActive,
-                CreatedAt = customer.CreatedAt
+                CreatedAt = customer.CreatedAt,
+                ContactPersonName = customer.ContactPersonName,
+                ContactPersonRole = customer.ContactPersonRole,
+                ContactPersonEmail = customer.ContactPersonEmail,
+                ContactPersonPhone = customer.ContactPersonPhone
             };
         }
 

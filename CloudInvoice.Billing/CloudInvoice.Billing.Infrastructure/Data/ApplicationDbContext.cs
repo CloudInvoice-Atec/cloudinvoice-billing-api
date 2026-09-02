@@ -30,6 +30,16 @@ namespace CloudInvoice.Billing.Infrastructure.Data
                 .Property(c => c.Id)
                 .ValueGeneratedNever();
 
+
+            // Configuração dos Enums da Invoice para serem guardados como String na BD
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.Status)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.PaymentStatus)
+                .HasConversion<string>();
+
             // 1:N relationship between Invoice and InvoiceLine
             modelBuilder.Entity<Invoice>()
                 .HasMany(i => i.Lines)

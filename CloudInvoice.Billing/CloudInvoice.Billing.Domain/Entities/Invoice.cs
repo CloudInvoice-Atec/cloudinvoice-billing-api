@@ -2,17 +2,35 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace CloudInvoice.Billing.Domain.Entities
 {
+    // Esta etiqueta mágica obriga o .NET a transformar o enum em String quando comunica com a API!
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum InvoiceStatus
+    {
+        Draft,
+        Issued,
+        Canceled
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum PaymentStatus
+    {
+        Unpaid,
+        PartiallyPaid,
+        Paid
+    }
     public class Invoice
     {
         public Guid Id { get; set; }
         public string InvoiceNumber { get; set; } = string.Empty;
         public string UserId { get; set; } = string.Empty; // From JWT (sub)
         public DateTime IssueDate { get; set; }
-        public string Status { get; set; } = "Pending"; // Pending or Issued
+        public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
 
         // Active Relationship (Foreign Key to current Customer)
         public Guid CustomerId { get; set; }

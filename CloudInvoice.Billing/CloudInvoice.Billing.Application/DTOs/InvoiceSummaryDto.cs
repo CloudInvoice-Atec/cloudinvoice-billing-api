@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CloudInvoice.Billing.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,6 @@ namespace CloudInvoice.Billing.Application.DTOs
         public string InvoiceNumber { get; set; } = string.Empty;
         public DateTime IssueDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public string Status { get; set; } = string.Empty;
+        public InvoiceStatus Status { get; set; }
     }
 }
