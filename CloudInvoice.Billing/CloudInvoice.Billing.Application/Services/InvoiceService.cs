@@ -53,7 +53,10 @@ namespace CloudInvoice.Billing.Application.Services
                 InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}",
                 UserId = userId,
                 IssueDate = DateTime.UtcNow,
-                Status = "Issued",
+
+                // Atribuição direta dos Enums do Domínio (Type Safety)
+                Status = InvoiceStatus.Issued,
+                PaymentStatus = PaymentStatus.Unpaid,
 
                 // Active Relationships
                 CustomerId = customer.Id,
@@ -104,54 +107,32 @@ namespace CloudInvoice.Billing.Application.Services
             await _invoiceRepository.AddAsync(invoice);
             await _invoiceRepository.SaveChangesAsync();
 
-            // 7. Map the resulting Entity back to a safe DTO to return to the Controller
-            return new InvoiceResponseDto
-            {
-                Id = invoice.Id,
-                InvoiceNumber = invoice.InvoiceNumber,
-                IssueDate = invoice.IssueDate,
-                Status = invoice.Status,
-                CustomerName = invoice.CustomerName,
-                CustomerTaxNumber = invoice.CustomerTaxNumber,
-                TotalBase = invoice.TotalBase,
-                TotalTax = invoice.TotalTax,
-                TotalAmount = invoice.TotalAmount
-            };
+            return MapToResponseDto(invoice);
         }
 
         public async Task<IEnumerable<InvoiceResponseDto>> GetUserInvoicesAsync(string userId)
         {
             var invoices = await _invoiceRepository.GetByUserIdAsync(userId);
-
-            return invoices.Select(invoice => new InvoiceResponseDto
-            {
-                Id = invoice.Id,
-                InvoiceNumber = invoice.InvoiceNumber,
-                IssueDate = invoice.IssueDate,
-                Status = invoice.Status,
-                CustomerName = invoice.CustomerName,
-                CustomerTaxNumber = invoice.CustomerTaxNumber,
-                TotalBase = invoice.TotalBase,
-                TotalTax = invoice.TotalTax,
-                TotalAmount = invoice.TotalAmount
-            });
+            return invoices.Select(MapToResponseDto);
         }
 
         public async Task<InvoiceResponseDto?> GetInvoiceByIdAsync(Guid invoiceId)
         {
             var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
+            if (invoice == null) return null;
 
-            if (invoice == null)
-            {
-                return null;
-            }
+            return MapToResponseDto(invoice);
+        }
 
+        private static InvoiceResponseDto MapToResponseDto(Invoice invoice)
+        {
             return new InvoiceResponseDto
             {
                 Id = invoice.Id,
                 InvoiceNumber = invoice.InvoiceNumber,
                 IssueDate = invoice.IssueDate,
                 Status = invoice.Status,
+                PaymentStatus = invoice.PaymentStatus,
                 CustomerName = invoice.CustomerName,
                 CustomerTaxNumber = invoice.CustomerTaxNumber,
                 TotalBase = invoice.TotalBase,

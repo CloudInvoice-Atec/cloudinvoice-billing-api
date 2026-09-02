@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CloudInvoice.Billing.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,9 @@ namespace CloudInvoice.Billing.Application.DTOs
         public Guid Id { get; set; }
         public string InvoiceNumber { get; set; } = string.Empty;
         public DateTime IssueDate { get; set; }
-        public string Status { get; set; } = string.Empty;
+        // Mapeados como Enums para que o .NET os serializa automaticamente como Strings na API
+        public InvoiceStatus Status { get; set; }
+        public PaymentStatus PaymentStatus { get; set; }
 
         // Emphasizing immutability: we return the frozen data
         public string CustomerName { get; set; } = string.Empty;
