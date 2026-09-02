@@ -124,6 +124,30 @@ namespace CloudInvoice.Billing.Application.Services
             return MapToResponseDto(invoice);
         }
 
+        public async Task<PagedResultDto<InvoiceResponseDto>> GetAllInvoicesAsync(int pageNumber, int pageSize)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100;
+
+            var (invoices, totalCount) = await _invoiceRepository.GetPagedAsync(pageNumber, pageSize);
+
+            var invoiceDtos = invoices.Select(MapToResponseDto).ToList();
+
+            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            return new PagedResultDto<InvoiceResponseDto>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                Items = invoiceDtos
+            };
+        }
+
+
+
         private static InvoiceResponseDto MapToResponseDto(Invoice invoice)
         {
             return new InvoiceResponseDto

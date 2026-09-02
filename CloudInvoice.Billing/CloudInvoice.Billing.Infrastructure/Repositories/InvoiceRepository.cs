@@ -44,5 +44,22 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<(IEnumerable<Invoice> Invoices, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            int skip = (pageNumber - 1) * pageSize;
+
+            int totalCount = await _context.Invoices.CountAsync();
+
+            var invoices = await _context.Invoices
+                .Include(i => i.Lines) // Inclui as linhas da fatura se necessário
+                .OrderByDescending(i => i.IssueDate) // Ordena pelas mais recentes
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (invoices, totalCount);
+        }
+
     }
 }

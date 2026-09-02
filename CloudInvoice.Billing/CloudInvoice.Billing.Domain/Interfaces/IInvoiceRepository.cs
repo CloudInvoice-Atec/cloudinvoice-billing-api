@@ -11,6 +11,7 @@ namespace CloudInvoice.Billing.Domain.Interfaces
     {
         Task<Invoice?> GetByIdAsync(Guid id);
         Task<IEnumerable<Invoice>> GetByUserIdAsync(string userId);
+        Task<(IEnumerable<Invoice> Invoices, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize);
         Task AddAsync(Invoice invoice);
         Task SaveChangesAsync();
     }
