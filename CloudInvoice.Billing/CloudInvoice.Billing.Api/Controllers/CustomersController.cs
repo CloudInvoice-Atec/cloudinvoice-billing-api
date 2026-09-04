@@ -71,6 +71,30 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
 
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> DeleteCustomer(Guid id)
+        {
+            try
+            {
+                var success = await _customerService.DeleteCustomerAsync(id);
+                if (!success)
+                {
+                    return NotFound(new { message = "Customer not found." });
+                }
+
+                // 204 No Content indica que a operação foi bem-sucedida e o recurso foi desativado/removido logicamente
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
 
         // Endpoint GET para obter as últimas N faturas de um cliente
         // Exemplo de chamada: GET /api/customers/{id}/invoices?count=5

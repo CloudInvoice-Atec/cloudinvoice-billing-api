@@ -37,6 +37,53 @@ namespace CloudInvoice.Billing.Api.Controllers
             }
         }
 
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult<InvoiceResponseDto>> UpdateInvoice(Guid id, [FromBody] UpdateInvoiceDto request)
+        {
+            try
+            {
+                var updatedInvoice = await _invoiceService.UpdateInvoiceAsync(id, request);
+                if (updatedInvoice == null)
+                {
+                    return NotFound(new { message = "Invoice not found." });
+                }
+
+                return Ok(updatedInvoice);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> DeleteInvoice(Guid id)
+        {
+            try
+            {
+                var deleted = await _invoiceService.DeleteInvoiceAsync(id);
+                if (!deleted)
+                {
+                    return NotFound(new { message = "Invoice not found." });
+                }
+
+                // 204 No Content indica que o recurso foi eliminado com sucesso e não há conteúdo a devolver
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Retorna erro 400 se tentar violar a regra de negócio (ex: apagar fatura emitida)
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<InvoiceResponseDto>> GetById(Guid id)
         {

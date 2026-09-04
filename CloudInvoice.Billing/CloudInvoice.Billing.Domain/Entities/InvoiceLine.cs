@@ -15,6 +15,7 @@ namespace CloudInvoice.Billing.Domain.Entities
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TaxRate { get; set; } // e.g., 23 for 23%
+        public decimal DiscountPercentage { get; set; } // e.g., 10 for 10%
 
         // Calculated properties
         public decimal TaxAmount => UnitPrice * (TaxRate / 100) * Quantity;

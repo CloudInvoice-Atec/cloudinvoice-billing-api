@@ -148,6 +148,24 @@ namespace CloudInvoice.Billing.Application.Services
 
 
 
+        public async Task<bool> DeleteCustomerAsync(Guid id)
+        {
+            // Procuramos o cliente existente pelo ID através do repositório
+            var customer = await _customerRepository.GetByIdAsync(id);
+            if (customer == null)
+            {
+                return false; // Cliente não encontrado
+            }
+            // Aqui, em vez de remover fisicamente, podemos apenas marcar como inativo
+            customer.IsActive = false;
+            _customerRepository.Update(customer); // (Certifica-te que o teu repositório tem o método Update ou usa a tracking do EF Core)
+            await _customerRepository.SaveChangesAsync();
+            return true;
+        }
+
+
+
+
 
         public async Task<PagedResultDto<CustomerResponseDto>> GetPagedCustomersAsync(CustomerQueryParameters parameters)
         {
