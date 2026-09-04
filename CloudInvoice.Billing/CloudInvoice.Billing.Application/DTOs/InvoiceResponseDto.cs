@@ -42,6 +42,7 @@ namespace CloudInvoice.Billing.Application.DTOs
         public decimal UnitPrice { get; set; }
         public decimal TaxRate { get; set; }
         public decimal TaxAmount { get; set; }
+        public decimal DiscountPercentage { get; set; }
         public decimal LineTotal { get; set; }
     }
 }

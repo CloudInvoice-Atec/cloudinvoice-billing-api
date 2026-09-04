@@ -13,6 +13,8 @@ namespace CloudInvoice.Billing.Domain.Interfaces
         Task<IEnumerable<Invoice>> GetByUserIdAsync(string userId);
         Task<(IEnumerable<Invoice> Invoices, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize);
         Task AddAsync(Invoice invoice);
+        Task UpdateAsync(Invoice invoice);
+        Task DeleteAsync(Invoice invoice);
         Task SaveChangesAsync();
     }
 }

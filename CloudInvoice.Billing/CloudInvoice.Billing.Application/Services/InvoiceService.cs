@@ -116,6 +116,90 @@ namespace CloudInvoice.Billing.Application.Services
             return MapToResponseDto(invoice);
         }
 
+
+        public async Task<InvoiceResponseDto?> UpdateInvoiceAsync(Guid id, UpdateInvoiceDto request)
+        {
+            var invoice = await _invoiceRepository.GetByIdAsync(id);
+            if (invoice == null)
+            {
+                return null; 
+            }
+
+            if (invoice.Status != InvoiceStatus.Draft)
+            {
+                throw new InvalidOperationException("Cannot update a non-draft invoice.");
+            }
+
+            // 2. Atualizar os dados gerais da fatura com base no DTO
+            invoice.Reference = request.Reference;
+            invoice.DueDate = request.DueDate;
+            invoice.Status = request.Status;
+            invoice.PaymentStatus = request.PaymentStatus;
+            invoice.Notes = request.Notes;
+
+            // 3. Limpar as linhas antigas para substituir pelas novas enviadas no update
+            invoice.Lines.Clear();
+
+            // 4. Processar e validar cada nova linha de produto
+            foreach (var itemDto in request.Items)
+            {
+                var availability = await _catalogIntegrationService.CheckAvailabilityAsync(itemDto.ProductId);
+                if (!availability.IsAvailable)
+                {
+                    throw new InvalidOperationException($"Product {itemDto.ProductId} is not available.");
+                }
+
+                decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
+                decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
+
+
+                var invoiceLine = new InvoiceLine
+                {
+                    Id = Guid.NewGuid(),
+                    InvoiceId = invoice.Id,
+                    ProductId = itemDto.ProductId,
+                    Description = availability.ProductName,
+                    Quantity = itemDto.Quantity,
+                    UnitPrice = unitPrice,
+                    DiscountPercentage = itemDto.DiscountPercentage,
+                    TaxRate = taxRate
+                };
+
+                invoice.Lines.Add(invoiceLine);
+            }
+
+            // 5. Recalcular os Totais Globais
+            invoice.TotalBase = invoice.Lines.Sum(l => l.UnitPrice * l.Quantity);
+            invoice.TotalTax = invoice.Lines.Sum(l => l.TaxAmount);
+            invoice.TotalAmount = invoice.Lines.Sum(l => l.LineTotal);
+
+            // 6. Persistir as alterações através do repositório
+            await _invoiceRepository.UpdateAsync(invoice);
+            await _invoiceRepository.SaveChangesAsync();
+
+            // 7. Devolver o DTO de resposta mapeado
+            return MapToResponseDto(invoice);
+        }
+
+        public async Task<bool> DeleteInvoiceAsync(Guid invoiceId)
+        {
+            var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
+            if (invoice == null)
+            {
+                return false;
+            }
+            if (invoice.Status != InvoiceStatus.Draft)
+            {
+                throw new InvalidOperationException("Cannot delete a non-draft invoice.");
+            }
+            await _invoiceRepository.DeleteAsync(invoice);
+            await _invoiceRepository.SaveChangesAsync();
+            return true; 
+        }
+
+
+
+
         public async Task<IEnumerable<InvoiceResponseDto>> GetUserInvoicesAsync(string userId)
         {
             var invoices = await _invoiceRepository.GetByUserIdAsync(userId);
@@ -179,6 +263,7 @@ namespace CloudInvoice.Billing.Application.Services
                     Description = line.Description,
                     Quantity = line.Quantity,
                     UnitPrice = line.UnitPrice,
+                    DiscountPercentage = line.DiscountPercentage,
                     TaxRate = line.TaxRate,
                     TaxAmount = line.TaxAmount,
                     LineTotal = line.LineTotal
