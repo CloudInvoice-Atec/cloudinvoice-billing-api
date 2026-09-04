@@ -27,10 +27,13 @@ namespace CloudInvoice.Billing.Domain.Entities
     {
         public Guid Id { get; set; }
         public string InvoiceNumber { get; set; } = string.Empty;
+        public string? Reference { get; set; }
         public string UserId { get; set; } = string.Empty; // From JWT (sub)
-        public DateTime IssueDate { get; set; }
+        public DateTime IssueDate { get; set; } = DateTime.UtcNow;
+        public DateTime DueDate { get; set; }
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
+        public string? Notes { get; set; }
 
         // Active Relationship (Foreign Key to current Customer)
         public Guid CustomerId { get; set; }
