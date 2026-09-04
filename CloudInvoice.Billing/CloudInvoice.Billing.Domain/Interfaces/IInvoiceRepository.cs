@@ -16,5 +16,7 @@ namespace CloudInvoice.Billing.Domain.Interfaces
         Task UpdateAsync(Invoice invoice);
         Task DeleteAsync(Invoice invoice);
         Task SaveChangesAsync();
+        Task<IEnumerable<Invoice>> GetRecentInvoicesAsync(int count);
+        Task<IEnumerable<Invoice>> GetInvoicesFromDateAsync(DateTime startDate);
     }
 }

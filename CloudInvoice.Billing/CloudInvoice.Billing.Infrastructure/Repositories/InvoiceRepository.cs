@@ -71,5 +71,22 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
             return (invoices, totalCount);
         }
 
+        public async Task<IEnumerable<Invoice>> GetRecentInvoicesAsync(int count)
+        {
+            return await _context.Invoices
+                .Include(i => i.Customer)
+                .OrderByDescending(i => i.IssueDate)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Invoice>> GetInvoicesFromDateAsync(DateTime startDate)
+        {
+            return await _context.Invoices
+                .Include(i => i.Customer)
+                .Where(i => i.IssueDate >= startDate)
+                .ToListAsync();
+        }
+
     }
 }
