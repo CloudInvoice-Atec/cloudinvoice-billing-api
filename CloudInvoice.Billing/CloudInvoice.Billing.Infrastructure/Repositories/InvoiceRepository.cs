@@ -45,6 +45,16 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateAsync(Invoice invoice)
+        {
+            _context.Invoices.Update(invoice);
+        }
+
+        public async Task DeleteAsync(Invoice invoice)
+        {
+            _context.Invoices.Remove(invoice);
+        }
+
         public async Task<(IEnumerable<Invoice> Invoices, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
         {
             int skip = (pageNumber - 1) * pageSize;

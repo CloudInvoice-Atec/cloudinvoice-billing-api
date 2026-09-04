@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 
 namespace CloudInvoice.Billing.Application.DTOs
 {
-    // Quando finaliza compra, o que é que a nossa API precisa de receber é apenas os identificadores e as quantidades.
-    // A nossa API é que vai ao Catálogo e à base de dados procurar os preços e os NIFs!
     public class CreateInvoiceDto
     {
         public Guid CustomerId { get; set; }
@@ -18,7 +16,6 @@ namespace CloudInvoice.Billing.Application.DTOs
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
         public string? Notes { get; set; }
-
 
         public List<CreateInvoiceLineDto> Items { get; set; } = new List<CreateInvoiceLineDto>();
     }
