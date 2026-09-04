@@ -149,36 +149,50 @@ namespace CloudInvoice.Billing.Application.Services
 
 
 
-        public async Task<IEnumerable<CustomerResponseDto>> GetAllCustomersAsync()
+        public async Task<PagedResultDto<CustomerResponseDto>> GetPagedCustomersAsync(CustomerQueryParameters parameters)
         {
-            // 1. Vai buscar os clientes à base de dados através do repositório
-            var customers = await _customerRepository.GetAllAsync();
+            // 1. Obter a query base (Idealmente o repositório deve devolver IQueryable para filtrar na DB)
+            var query = await _customerRepository.GetAllAsync();
+            var queryable = query.AsQueryable();
 
-            // 2. Mapeia cada entidade do Domínio para o DTO de resposta da Aplicação
-            return customers.Select(c => new CustomerResponseDto
+            // 2. Aplicar Filtro de Pesquisa (Nome, NIF ou Email)
+            if (!string.IsNullOrWhiteSpace(parameters.Search))
             {
-                Id = c.Id,
-                Name = c.Name,
-                TradeName = c.TradeName,
-                TaxId = c.TaxId,
-                IsActive = c.IsActive,
-                CurrentDebt = c.CurrentDebt,
-                CreditLimit = c.CreditLimit,
-                TotalInvoiced = c.TotalInvoiced,
-                PaymentTermsDays = c.PaymentTermsDays,
-                Email = c.Email,
-                Phone = c.Phone,
-                Address = c.Address,
-                City = c.City,
-                PostalCode = c.PostalCode,
-                Country = c.Country,
-                DefaultDiscount = c.DefaultDiscount,
-                CreatedAt = c.CreatedAt,
-                ContactPersonName = c.ContactPersonName,
-                ContactPersonRole = c.ContactPersonRole,
-                ContactPersonEmail = c.ContactPersonEmail,
-                ContactPersonPhone = c.ContactPersonPhone
-            });
+                var searchLower = parameters.Search.ToLower();
+                queryable = queryable.Where(c =>
+                    c.Name.ToLower().Contains(searchLower) ||
+                    c.TaxId.Contains(searchLower) ||
+                    (c.Email != null && c.Email.ToLower().Contains(searchLower)));
+            }
+
+            // 3. Aplicar Filtro de Estado
+            if (parameters.IsActive.HasValue)
+            {
+                queryable = queryable.Where(c => c.IsActive == parameters.IsActive.Value);
+            }
+
+            // 4. Calcular Totais
+            var totalCount = queryable.Count();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)parameters.PageSize);
+
+            // 5. Aplicar Paginação (Skip e Take)
+            var pagedCustomers = queryable
+                .OrderByDescending(c => c.CreatedAt) // Ordenar pelos mais recentes
+                .Skip((parameters.Page - 1) * parameters.PageSize)
+                .Take(parameters.PageSize)
+                .ToList();
+
+            // 6. Mapear para DTOs e devolver o objeto paginado
+            var items = pagedCustomers.Select(c => MapToDto(c)).ToList();
+
+            return new PagedResultDto<CustomerResponseDto>
+            {
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                PageNumber = parameters.Page,
+                PageSize = parameters.PageSize,
+                Items = items
+            };
         }
 
 

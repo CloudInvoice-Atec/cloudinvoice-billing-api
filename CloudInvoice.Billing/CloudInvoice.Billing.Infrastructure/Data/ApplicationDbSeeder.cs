@@ -18,7 +18,7 @@ namespace CloudInvoice.Billing.Infrastructure.Data
             var context = services.GetRequiredService<ApplicationDbContext>();
 
             // 1. Aplica migrações pendentes
-            await context.Database.MigrateAsync();
+            //await context.Database.MigrateAsync();
 
             // 2. Insere a empresa padrão caso a tabela esteja vazia
             if (!await context.Set<Company>().AnyAsync())

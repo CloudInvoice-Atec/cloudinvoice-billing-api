@@ -86,10 +86,10 @@ namespace CloudInvoice.Billing.Api.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CustomerResponseDto>>> GetAll()
+        public async Task<ActionResult<PagedResultDto<CustomerResponseDto>>> GetAll([FromQuery] CustomerQueryParameters parameters)
         {
-            var customers = await _customerService.GetAllCustomersAsync();
-            return Ok(customers);
+            var pagedResult = await _customerService.GetPagedCustomersAsync(parameters);
+            return Ok(pagedResult);
         }
 
 
