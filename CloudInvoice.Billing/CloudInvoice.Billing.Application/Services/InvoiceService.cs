@@ -51,12 +51,15 @@ namespace CloudInvoice.Billing.Application.Services
             {
                 Id = Guid.NewGuid(),
                 InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}",
+                Reference = request.Reference,
                 UserId = userId,
-                IssueDate = DateTime.UtcNow,
+                IssueDate = request.IssueDate,
+                DueDate = request.DueDate,
 
                 // Atribuição direta dos Enums do Domínio (Type Safety)
-                Status = InvoiceStatus.Issued,
-                PaymentStatus = PaymentStatus.Unpaid,
+                Status = request.Status,
+                PaymentStatus = request.PaymentStatus,
+                Notes = request.Notes,
 
                 // Active Relationships
                 CustomerId = customer.Id,
@@ -83,6 +86,9 @@ namespace CloudInvoice.Billing.Application.Services
                     throw new InvalidOperationException($"Product {itemDto.ProductId} is not available.");
                 }
 
+                decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
+                decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
+
                 // Map data to the Domain Entity (InvoiceLine)
                 var invoiceLine = new InvoiceLine
                 {
@@ -91,8 +97,8 @@ namespace CloudInvoice.Billing.Application.Services
                     ProductId = itemDto.ProductId,
                     Description = availability.ProductName,
                     Quantity = itemDto.Quantity,
-                    UnitPrice = availability.BasePrice,
-                    TaxRate = availability.TaxRate
+                    UnitPrice = unitPrice,
+                    TaxRate = taxRate
                 };
 
                 invoice.Lines.Add(invoiceLine);
@@ -154,14 +160,29 @@ namespace CloudInvoice.Billing.Application.Services
             {
                 Id = invoice.Id,
                 InvoiceNumber = invoice.InvoiceNumber,
+                Reference = invoice.Reference,
                 IssueDate = invoice.IssueDate,
+                DueDate = invoice.DueDate,
                 Status = invoice.Status,
                 PaymentStatus = invoice.PaymentStatus,
+                Notes = invoice.Notes,
                 CustomerName = invoice.CustomerName,
                 CustomerTaxNumber = invoice.CustomerTaxNumber,
                 TotalBase = invoice.TotalBase,
                 TotalTax = invoice.TotalTax,
-                TotalAmount = invoice.TotalAmount
+                TotalAmount = invoice.TotalAmount,
+
+                Lines = invoice.Lines.Select(line => new InvoiceLineResponseDto
+                {
+                    Id = line.Id,
+                    ProductId = line.ProductId,
+                    Description = line.Description,
+                    Quantity = line.Quantity,
+                    UnitPrice = line.UnitPrice,
+                    TaxRate = line.TaxRate,
+                    TaxAmount = line.TaxAmount,
+                    LineTotal = line.LineTotal
+                }).ToList()
             };
         }
     }
