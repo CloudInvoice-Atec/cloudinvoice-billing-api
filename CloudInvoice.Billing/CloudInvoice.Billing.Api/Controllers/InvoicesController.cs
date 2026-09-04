@@ -2,6 +2,7 @@
 using CloudInvoice.Billing.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CloudInvoice.Billing.Api.Controllers
 {
@@ -22,17 +23,25 @@ namespace CloudInvoice.Billing.Api.Controllers
         {
             try
             {
-                // Simulamos um ID de utilizador autenticado (num cenário real viria do token JWT)
-                string userId = "user-system-default";
+                // Como limpaste o mapa, o tipo da claim é exatamente o nome que está no JSON: "nameid"
+                /*string userId = User.FindFirstValue("nameid")
+                                ?? User.FindFirstValue("sub")
+                                ?? User.FindFirstValue(ClaimTypes.NameIdentifier); */
+
+                string userId = "754d08c8-ea1d-49bf-8bcb-87263778cdba";
+
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Utilizador não autenticado ou token inválido." });
+                }
 
                 var result = await _invoiceService.CreateInvoiceAsync(userId, request);
 
-                // Devolvemos um HTTP 201 Created com o DTO de resposta limpo
                 return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
             catch (Exception ex)
             {
-                // Tratamento básico de erro para fins académicos
                 return BadRequest(new { message = ex.Message });
             }
         }

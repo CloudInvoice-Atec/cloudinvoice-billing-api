@@ -14,5 +14,7 @@ namespace CloudInvoice.Billing.Application.DTOs
         public DateTime IssueDate { get; set; }
         public decimal TotalAmount { get; set; }
         public InvoiceStatus Status { get; set; }
+
+        
     }
 }

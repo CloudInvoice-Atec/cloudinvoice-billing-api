@@ -32,7 +32,7 @@ namespace CloudInvoice.Billing.Infrastructure.Services
             {
                 // O BaseAddress já vai estar configurado no Program.cs
                 // Só precisamos de chamar o endpoint específico
-                var response = await _httpClient.GetAsync($"/api/catalog/{productId}/availability");
+                var response = await _httpClient.GetAsync($"/api/Products/{productId}/check-availability");
 
                 if (response.IsSuccessStatusCode)
                 {
