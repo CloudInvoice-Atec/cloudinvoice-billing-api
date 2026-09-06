@@ -76,6 +76,11 @@ namespace CloudInvoice.Billing.Application.Services
             };
 
             // 4. Process each item in the request DTO
+
+            decimal sumTotalBase = 0;
+            decimal sumTotalTax = 0;
+            decimal sumTotalAmount = 0;
+
             foreach (var itemDto in request.Items)
             {
                 // Call the external Catalog.API via our integration service
@@ -88,6 +93,23 @@ namespace CloudInvoice.Billing.Application.Services
 
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
                 decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
+                decimal discountPercentage = itemDto.DiscountPercentage;
+
+                // 1. Valor bruto da linha
+                decimal bruto = itemDto.Quantity * itemDto.BasePrice;
+
+                // 2. Base Líquida (já com o desconto abatido)
+                // Se DiscountPercentage for 50, fica 50/100 = 0.5. Bruto * (1 - 0.5)
+                decimal baseLiquida = bruto * (1 - (itemDto.DiscountPercentage / 100m));
+
+                // 3. Valor do IVA sobre a base líquida
+                decimal valorIva = baseLiquida * (itemDto.TaxRate / 100m);
+
+                // 4. Acumular para os totais globais da fatura
+                sumTotalBase += baseLiquida;
+                sumTotalTax += valorIva;
+                sumTotalAmount += (baseLiquida + valorIva);
+
 
                 // Map data to the Domain Entity (InvoiceLine)
                 var invoiceLine = new InvoiceLine
@@ -95,19 +117,20 @@ namespace CloudInvoice.Billing.Application.Services
                     Id = Guid.NewGuid(),
                     InvoiceId = invoice.Id,
                     ProductId = itemDto.ProductId,
-                    Description = availability.ProductName,
+                    Description = availability.ProductDescription,
                     Quantity = itemDto.Quantity,
                     UnitPrice = unitPrice,
-                    TaxRate = taxRate
+                    TaxRate = taxRate,
+                    DiscountPercentage = discountPercentage
                 };
 
                 invoice.Lines.Add(invoiceLine);
             }
 
             // 5. Calculate Totals
-            invoice.TotalBase = invoice.Lines.Sum(l => l.UnitPrice * l.Quantity);
-            invoice.TotalTax = invoice.Lines.Sum(l => l.TaxAmount);
-            invoice.TotalAmount = invoice.Lines.Sum(l => l.LineTotal);
+            invoice.TotalBase = sumTotalBase;
+            invoice.TotalTax = sumTotalTax;
+            invoice.TotalAmount = sumTotalAmount;
 
             // 6. Save using the Repository
             await _invoiceRepository.AddAsync(invoice);
@@ -158,7 +181,7 @@ namespace CloudInvoice.Billing.Application.Services
                     Id = Guid.NewGuid(),
                     InvoiceId = invoice.Id,
                     ProductId = itemDto.ProductId,
-                    Description = availability.ProductName,
+                    Description = availability.ProductDescription,
                     Quantity = itemDto.Quantity,
                     UnitPrice = unitPrice,
                     DiscountPercentage = itemDto.DiscountPercentage,
