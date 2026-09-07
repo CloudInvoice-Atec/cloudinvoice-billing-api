@@ -39,6 +39,10 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
         {
             await _context.Invoices.AddAsync(invoice);
         }
+        public async Task AddLinesAsync(InvoiceLine invoiceline)
+        {
+            await _context.InvoiceLines.AddAsync(invoiceline);
+        }
 
         public async Task SaveChangesAsync()
         {
