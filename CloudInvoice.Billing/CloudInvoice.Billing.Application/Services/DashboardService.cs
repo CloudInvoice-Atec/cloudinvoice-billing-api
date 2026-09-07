@@ -42,8 +42,9 @@ namespace CloudInvoice.Billing.Application.Services
                 NewCustomersCount = allCustomers.Count(c => c.CreatedAt >= startOfMonth)
             };
 
-            // 3. Faturas Recentes (Últimas 5)
+            // 3. Faturas Recentes (Últimas 5 - Exclui Drafts, mostra apenas Issued)
             var recentInvoices = invoicesList
+                .Where(i => i.Status == InvoiceStatus.Issued) // 👈 Filtro adicionado aqui
                 .OrderByDescending(i => i.IssueDate)
                 .Take(5)
                 .Select(i => new RecentInvoiceDto
@@ -53,7 +54,7 @@ namespace CloudInvoice.Billing.Application.Services
                     CustomerName = i.Customer?.Name ?? "Desconhecido",
                     IssueDate = i.IssueDate,
                     TotalAmount = i.TotalAmount,
-                    Status = i.Status.ToString() // 👈 Converte o enum InvoiceStatus para string
+                    Status = i.Status.ToString()
                 }).ToList();
 
             // 4. Gráfico de Evolução (Últimos 6 meses)
