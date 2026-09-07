@@ -145,7 +145,7 @@ namespace CloudInvoice.Billing.Application.Services
             var invoice = await _invoiceRepository.GetByIdAsync(id);
             if (invoice == null)
             {
-                return null; 
+                return null;
             }
 
             if (invoice.Status != InvoiceStatus.Draft)
@@ -163,6 +163,11 @@ namespace CloudInvoice.Billing.Application.Services
             // 3. Limpar as linhas antigas para substituir pelas novas enviadas no update
             invoice.Lines.Clear();
 
+            // Preparar acumuladores para os totais globais
+            decimal sumTotalBase = 0;
+            decimal sumTotalTax = 0;
+            decimal sumTotalAmount = 0;
+
             // 4. Processar e validar cada nova linha de produto
             foreach (var itemDto in request.Items)
             {
@@ -175,7 +180,7 @@ namespace CloudInvoice.Billing.Application.Services
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
                 decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
 
-
+                // Criar a nova entidade de linha
                 var invoiceLine = new InvoiceLine
                 {
                     Id = Guid.NewGuid(),
@@ -188,13 +193,32 @@ namespace CloudInvoice.Billing.Application.Services
                     TaxRate = taxRate
                 };
 
+                // --- INÍCIO DA MATEMÁTICA CORRIGIDA ---
+
+                // 1. Valor bruto da linha
+                decimal bruto = invoiceLine.Quantity * invoiceLine.UnitPrice;
+
+                // 2. Base Líquida (já com o desconto abatido)
+                decimal baseLiquida = bruto * (1 - (invoiceLine.DiscountPercentage / 100m));
+
+                // 3. Valor do IVA sobre a base líquida
+                decimal valorIva = baseLiquida * (invoiceLine.TaxRate / 100m);
+
+                // 4. Acumular para os totais globais
+                sumTotalBase += baseLiquida;
+                sumTotalTax += valorIva;
+                sumTotalAmount += (baseLiquida + valorIva);
+
+                // --- FIM DA MATEMÁTICA ---
+
+                // Adicionar a linha limpa (sem os totais guardados nela) à fatura
                 invoice.Lines.Add(invoiceLine);
             }
 
-            // 5. Recalcular os Totais Globais
-            invoice.TotalBase = invoice.Lines.Sum(l => l.UnitPrice * l.Quantity);
-            invoice.TotalTax = invoice.Lines.Sum(l => l.TaxAmount);
-            invoice.TotalAmount = invoice.Lines.Sum(l => l.LineTotal);
+            // 5. Atribuir os Totais Globais calculados à fatura
+            invoice.TotalBase = sumTotalBase;
+            invoice.TotalTax = sumTotalTax;
+            invoice.TotalAmount = sumTotalAmount;
 
             // 6. Persistir as alterações através do repositório
             await _invoiceRepository.UpdateAsync(invoice);
