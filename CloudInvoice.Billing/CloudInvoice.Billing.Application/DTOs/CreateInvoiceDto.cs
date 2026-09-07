@@ -11,7 +11,7 @@ namespace CloudInvoice.Billing.Application.DTOs
     {
         public Guid CustomerId { get; set; }
         public string? Reference { get; set; }
-        public DateTime IssueDate { get; set; } = DateTime.UtcNow;
+        public DateTime IssueDate { get; set; } 
         public DateTime DueDate { get; set; } = DateTime.Today.AddDays(30);
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;

@@ -74,7 +74,6 @@ namespace CloudInvoice.Billing.Application.Services
                 CompanyTaxNumber = company.TaxNumber,
                 CompanyAddress = company.Address
             };
-
             // 4. Process each item in the request DTO
 
             decimal sumTotalBase = 0;
@@ -142,6 +141,7 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<InvoiceResponseDto?> UpdateInvoiceAsync(Guid id, UpdateInvoiceDto request)
         {
+            // 1. Obter a fatura (⚠️ IMPORTANTE: O repositório tem de fazer .Include(i => i.Lines) neste GetById)
             var invoice = await _invoiceRepository.GetByIdAsync(id);
             if (invoice == null)
             {
@@ -153,34 +153,56 @@ namespace CloudInvoice.Billing.Application.Services
                 throw new InvalidOperationException("Cannot update a non-draft invoice.");
             }
 
-            // 2. Atualizar os dados gerais da fatura com base no DTO
+            var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
+            if (customer == null) throw new ArgumentException("Customer not found.");
+
+            var company = await _companyRepository.GetByIdAsync(1);
+            if (company == null) throw new InvalidOperationException("Company settings not configured.");
+
+            // ==========================================================
+            // PASSO A: APAGAR AS LINHAS ANTIGAS IMEDIATAMENTE DA BD
+            // ==========================================================
+            if (invoice.Lines.Any())
+            {
+                invoice.Lines.Clear();
+                await _invoiceRepository.SaveChangesAsync(); // Grava na BD: Faz os DELETEs reais!
+            }
+
+            // ==========================================================
+            // PASSO B: ATUALIZAR OS DADOS GERAIS DA FATURA
+            // ==========================================================
             invoice.Reference = request.Reference;
             invoice.DueDate = request.DueDate;
             invoice.Status = request.Status;
             invoice.PaymentStatus = request.PaymentStatus;
             invoice.Notes = request.Notes;
+            invoice.IssueDate = request.IssueDate;
 
-            // 3. Limpar as linhas antigas para substituir pelas novas enviadas no update
-            invoice.Lines.Clear();
+            invoice.CustomerId = customer.Id;
+            invoice.CustomerName = customer.Name;
+            invoice.CustomerTaxNumber = customer.TaxId;
+            invoice.CustomerAddress = customer.Address;
 
-            // Preparar acumuladores para os totais globais
+            invoice.CompanyName = company.Name;
+            invoice.CompanyTaxNumber = company.TaxNumber;
+            invoice.CompanyAddress = company.Address;
+
+            // ==========================================================
+            // PASSO C: CRIAR E CALCULAR AS NOVAS LINHAS (Tudo INSERTS)
+            // ==========================================================
             decimal sumTotalBase = 0;
             decimal sumTotalTax = 0;
             decimal sumTotalAmount = 0;
 
-            // 4. Processar e validar cada nova linha de produto
             foreach (var itemDto in request.Items)
             {
                 var availability = await _catalogIntegrationService.CheckAvailabilityAsync(itemDto.ProductId);
                 if (!availability.IsAvailable)
-                {
                     throw new InvalidOperationException($"Product {itemDto.ProductId} is not available.");
-                }
 
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
                 decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
 
-                // Criar a nova entidade de linha
                 var invoiceLine = new InvoiceLine
                 {
                     Id = Guid.NewGuid(),
@@ -193,38 +215,37 @@ namespace CloudInvoice.Billing.Application.Services
                     TaxRate = taxRate
                 };
 
-                // --- INÍCIO DA MATEMÁTICA CORRIGIDA ---
-
-                // 1. Valor bruto da linha
+                // Matemática
                 decimal bruto = invoiceLine.Quantity * invoiceLine.UnitPrice;
-
-                // 2. Base Líquida (já com o desconto abatido)
                 decimal baseLiquida = bruto * (1 - (invoiceLine.DiscountPercentage / 100m));
-
-                // 3. Valor do IVA sobre a base líquida
                 decimal valorIva = baseLiquida * (invoiceLine.TaxRate / 100m);
 
-                // 4. Acumular para os totais globais
                 sumTotalBase += baseLiquida;
                 sumTotalTax += valorIva;
                 sumTotalAmount += (baseLiquida + valorIva);
 
-                // --- FIM DA MATEMÁTICA ---
-
-                // Adicionar a linha limpa (sem os totais guardados nela) à fatura
+                // Adiciona a nova linha
                 invoice.Lines.Add(invoiceLine);
+
+                await _invoiceRepository.AddLinesAsync(invoiceLine);
+
             }
 
-            // 5. Atribuir os Totais Globais calculados à fatura
+            // Atribuir totais
             invoice.TotalBase = sumTotalBase;
             invoice.TotalTax = sumTotalTax;
             invoice.TotalAmount = sumTotalAmount;
 
-            // 6. Persistir as alterações através do repositório
-            await _invoiceRepository.UpdateAsync(invoice);
+            // ==========================================================
+            // PASSO D: GRAVAR O UPDATE DA FATURA E OS INSERTS DAS LINHAS
+            // ==========================================================
+            // Nota: Dependendo de como o Repositório genérico do teu colega funciona, 
+            // o UpdateAsync pode voltar a causar problemas. Se der erro novamente, 
+            // basta comentar o UpdateAsync e deixar apenas o SaveChangesAsync.
+            //await _invoiceRepository.UpdateAsync(invoice);
+            
             await _invoiceRepository.SaveChangesAsync();
 
-            // 7. Devolver o DTO de resposta mapeado
             return MapToResponseDto(invoice);
         }
 
@@ -297,8 +318,13 @@ namespace CloudInvoice.Billing.Application.Services
                 Status = invoice.Status,
                 PaymentStatus = invoice.PaymentStatus,
                 Notes = invoice.Notes,
+                CustomerId = invoice.CustomerId,
                 CustomerName = invoice.CustomerName,
                 CustomerTaxNumber = invoice.CustomerTaxNumber,
+                CustomerAddress = invoice.CustomerAddress,
+                CompanyName = invoice.CompanyName,
+                CompanyTaxNumber = invoice.CompanyTaxNumber,
+                CompanyAddress = invoice.CompanyAddress,
                 TotalBase = invoice.TotalBase,
                 TotalTax = invoice.TotalTax,
                 TotalAmount = invoice.TotalAmount,

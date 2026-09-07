@@ -22,8 +22,14 @@ namespace CloudInvoice.Billing.Application.DTOs
         public string? Notes { get; set; }
 
         // Emphasizing immutability: we return the frozen data
+        public Guid CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerTaxNumber { get; set; } = string.Empty;
+        public string CustomerAddress { get; set; } = string.Empty;
+
+        public string CompanyName { get; set; }
+        public string CompanyTaxNumber { get; set; }
+        public string CompanyAddress { get; set; }
 
         // Formatted totals for the frontend
         public decimal TotalBase { get; set; }
