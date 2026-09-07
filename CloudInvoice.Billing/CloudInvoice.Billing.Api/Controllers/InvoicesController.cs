@@ -1,5 +1,6 @@
 ﻿using CloudInvoice.Billing.Application.DTOs;
 using CloudInvoice.Billing.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -8,6 +9,7 @@ namespace CloudInvoice.Billing.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class InvoicesController : ControllerBase
     {
         // O Controller depende apenas da Interface (baixo acoplamento)
@@ -23,17 +25,21 @@ namespace CloudInvoice.Billing.Api.Controllers
         {
             try
             {
-                // Como limpaste o mapa, o tipo da claim é exatamente o nome que está no JSON: "nameid"
-                /*string userId = User.FindFirstValue("nameid")
-                                ?? User.FindFirstValue("sub")
-                                ?? User.FindFirstValue(ClaimTypes.NameIdentifier); */
+                // 1. CÓDIGO DE DIAGNÓSTICO: Extrai e junta todas as chaves e valores lidos do token
+                var todasAsClaims = string.Join(" | ", User.Claims.Select(c => c.Type + "=" + c.Value));
 
-                string userId = "754d08c8-ea1d-49bf-8bcb-87263778cdba";
-
+                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                              ?? User.FindFirstValue("sub")
+                              ?? User.FindFirstValue("nameid");
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized(new { message = "Utilizador não autenticado ou token inválido." });
+                    // 2. Devolvemos a lista real de claims para detetar o nome correto
+                    return Unauthorized(new
+                    {
+                        message = "Utilizador não autenticado ou token sem identificador.",
+                        claimsRecebidas = todasAsClaims // Vê o resultado na consola do frontend ou Swagger
+                    });
                 }
 
                 var result = await _invoiceService.CreateInvoiceAsync(userId, request);

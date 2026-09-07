@@ -29,7 +29,6 @@ namespace CloudInvoice.Billing.Api
             builder.Services.AddScoped<ICatalogIntegrationService, CatalogIntegrationService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-            builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
             builder.Services.AddScoped<ICompanyService, CompanyService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
 
@@ -75,6 +74,8 @@ namespace CloudInvoice.Billing.Api
             // 1. Lê a chave secreta do appsettings.json e transforma-a em bytes
             var jwtSecret = builder.Configuration["JwtSettings:Secret"];
             var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
             // 2. Configura o serviço de Autenticação
             builder.Services.AddAuthentication(options =>
