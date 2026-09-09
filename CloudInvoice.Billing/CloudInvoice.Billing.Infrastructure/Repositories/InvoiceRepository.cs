@@ -52,6 +52,7 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
         public async Task UpdateAsync(Invoice invoice)
         {
             _context.Invoices.Update(invoice);
+            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Invoice invoice)

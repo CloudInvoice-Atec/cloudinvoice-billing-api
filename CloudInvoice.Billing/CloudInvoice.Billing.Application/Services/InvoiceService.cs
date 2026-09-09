@@ -343,5 +343,64 @@ namespace CloudInvoice.Billing.Application.Services
                 }).ToList()
             };
         }
+
+        public async Task<bool> CancelInvoiceAsync(Guid id, string userId)
+        {
+            var invoice = await _invoiceRepository.GetByIdAsync(id);
+
+            // Valida se a fatura existe e se pertence à empresa do utilizador autenticado
+            if (invoice == null || invoice.UserId != userId)
+            {
+                return false;
+            }
+
+            // Apenas faturas emitidas podem ser canceladas legalmente
+            if (invoice.Status != InvoiceStatus.Issued)
+            {
+                return false;
+            }
+
+            // Atualiza o estado
+            invoice.Status = InvoiceStatus.Canceled;
+
+            // Se a fatura estava como não paga ou parcialmente paga, podes querer forçar um estado específico
+            // invoice.PaymentStatus = PaymentStatus.Unpaid; 
+
+            await _invoiceRepository.UpdateAsync(invoice);
+
+            return true;
+        }
+
+        public async Task<bool> MarkAsPaidAsync(Guid id, string userId)
+        {
+            var invoice = await _invoiceRepository.GetByIdAsync(id);
+
+            // Valida existência e propriedade
+            if (invoice == null || invoice.UserId != userId)
+            {
+                return false;
+            }
+
+            // Apenas faturas com estado "Issued" podem receber pagamentos
+            if (invoice.Status != InvoiceStatus.Issued)
+            {
+                return false;
+            }
+
+            // Apenas faturas que não estejam totalmente pagas devem ser atualizadas
+            if (invoice.PaymentStatus == PaymentStatus.Paid)
+            {
+                return false;
+            }
+
+            // Atualiza o estado do pagamento
+            invoice.PaymentStatus = PaymentStatus.Paid;
+
+            // Atualiza o repositório 
+            // NOTA: Como corrigimos o UpdateAsync anteriormente, ele já inclui o _context.SaveChangesAsync() internamente!
+            await _invoiceRepository.UpdateAsync(invoice);
+
+            return true;
+        }
     }
 }
