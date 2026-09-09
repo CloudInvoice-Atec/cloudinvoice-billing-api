@@ -126,27 +126,20 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
         [HttpPut("{id}/cancel")]
+        [Authorize(Roles = "Admin")] // 2. Tranca o endpoint no backend
         public async Task<IActionResult> CancelInvoice(Guid id)
         {
             try
             {
-                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                              ?? User.FindFirstValue("sub")
-                              ?? User.FindFirstValue("nameid");
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "Utilizador não autenticado." });
-                }
-
-                var success = await _invoiceService.CancelInvoiceAsync(id, userId);
+                // Já não precisamos de extrair nem passar o userId
+                var success = await _invoiceService.CancelInvoiceAsync(id);
 
                 if (!success)
                 {
-                    return BadRequest(new { message = "Não foi possível cancelar a fatura. A fatura não existe, não pertence a este utilizador ou o seu estado atual não permite cancelamento." });
+                    return BadRequest(new { message = "Não foi possível cancelar a fatura. A fatura não existe ou o seu estado atual não permite cancelamento." });
                 }
 
-                return NoContent(); // HTTP 204: Pedido processado com sucesso, sem conteúdo para devolver
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -155,27 +148,20 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
         [HttpPut("{id}/pay")]
+        [Authorize] // Qualquer utilizador autenticado pode aceder
         public async Task<IActionResult> MarkAsPaid(Guid id)
         {
             try
             {
-                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                              ?? User.FindFirstValue("sub")
-                              ?? User.FindFirstValue("nameid");
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "Utilizador não autenticado." });
-                }
-
-                var success = await _invoiceService.MarkAsPaidAsync(id, userId);
+                // Já não extraímos nem enviamos o userId
+                var success = await _invoiceService.MarkAsPaidAsync(id);
 
                 if (!success)
                 {
-                    return BadRequest(new { message = "Não foi possível registar o pagamento. A fatura não existe, não lhe pertence ou o seu estado atual não permite pagamento." });
+                    return BadRequest(new { message = "Não foi possível registar o pagamento. A fatura não existe ou o seu estado atual não permite pagamento." });
                 }
 
-                return NoContent(); // HTTP 204: Sucesso sem conteúdo devolvido, ativando a UI
+                return NoContent();
             }
             catch (Exception ex)
             {

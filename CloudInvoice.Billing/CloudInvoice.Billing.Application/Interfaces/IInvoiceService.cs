@@ -15,7 +15,7 @@ namespace CloudInvoice.Billing.Application.Interfaces
         Task<PagedResultDto<InvoiceResponseDto>> GetAllInvoicesAsync(int pageNumber, int pageSize);
         Task<InvoiceResponseDto?> UpdateInvoiceAsync(Guid invoiceId, UpdateInvoiceDto request);
         Task<bool> DeleteInvoiceAsync(Guid invoiceId);
-        Task<bool> CancelInvoiceAsync(Guid id, string userId);
-        Task<bool> MarkAsPaidAsync(Guid id, string userId);
+        Task<bool> CancelInvoiceAsync(Guid id);
+        Task<bool> MarkAsPaidAsync(Guid id);
     }
 }

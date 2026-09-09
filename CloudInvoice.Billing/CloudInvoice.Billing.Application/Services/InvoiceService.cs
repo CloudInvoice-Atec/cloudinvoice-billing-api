@@ -243,7 +243,7 @@ namespace CloudInvoice.Billing.Application.Services
             // o UpdateAsync pode voltar a causar problemas. Se der erro novamente, 
             // basta comentar o UpdateAsync e deixar apenas o SaveChangesAsync.
             //await _invoiceRepository.UpdateAsync(invoice);
-            
+
             await _invoiceRepository.SaveChangesAsync();
 
             return MapToResponseDto(invoice);
@@ -262,7 +262,7 @@ namespace CloudInvoice.Billing.Application.Services
             }
             await _invoiceRepository.DeleteAsync(invoice);
             await _invoiceRepository.SaveChangesAsync();
-            return true; 
+            return true;
         }
 
 
@@ -344,60 +344,54 @@ namespace CloudInvoice.Billing.Application.Services
             };
         }
 
-        public async Task<bool> CancelInvoiceAsync(Guid id, string userId)
+        public async Task<bool> CancelInvoiceAsync(Guid id)
         {
             var invoice = await _invoiceRepository.GetByIdAsync(id);
 
-            // Valida se a fatura existe e se pertence à empresa do utilizador autenticado
-            if (invoice == null || invoice.UserId != userId)
+            // 3. Remove a validação do dono da fatura. Apenas verifica se existe.
+            if (invoice == null)
             {
                 return false;
             }
 
-            // Apenas faturas emitidas podem ser canceladas legalmente
             if (invoice.Status != InvoiceStatus.Issued)
             {
                 return false;
             }
 
-            // Atualiza o estado
             invoice.Status = InvoiceStatus.Canceled;
-
-            // Se a fatura estava como não paga ou parcialmente paga, podes querer forçar um estado específico
-            // invoice.PaymentStatus = PaymentStatus.Unpaid; 
 
             await _invoiceRepository.UpdateAsync(invoice);
 
             return true;
         }
 
-        public async Task<bool> MarkAsPaidAsync(Guid id, string userId)
+        public async Task<bool> MarkAsPaidAsync(Guid id)
         {
             var invoice = await _invoiceRepository.GetByIdAsync(id);
 
-            // Valida existência e propriedade
-            if (invoice == null || invoice.UserId != userId)
+            // 1. Verifica se existe (removida a validação de propriedade)
+            if (invoice == null)
             {
                 return false;
             }
 
-            // Apenas faturas com estado "Issued" podem receber pagamentos
+            // 2. Apenas faturas com estado "Issued" podem receber pagamentos
             if (invoice.Status != InvoiceStatus.Issued)
             {
                 return false;
             }
 
-            // Apenas faturas que não estejam totalmente pagas devem ser atualizadas
+            // 3. Apenas faturas que não estejam totalmente pagas devem ser atualizadas
             if (invoice.PaymentStatus == PaymentStatus.Paid)
             {
                 return false;
             }
 
-            // Atualiza o estado do pagamento
+            // 4. Atualiza o estado do pagamento
             invoice.PaymentStatus = PaymentStatus.Paid;
 
-            // Atualiza o repositório 
-            // NOTA: Como corrigimos o UpdateAsync anteriormente, ele já inclui o _context.SaveChangesAsync() internamente!
+            // 5. Guarda na base de dados
             await _invoiceRepository.UpdateAsync(invoice);
 
             return true;

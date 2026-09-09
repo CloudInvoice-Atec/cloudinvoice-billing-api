@@ -3,3 +3,7 @@
 ################################################################################
 
 /.vs
+/CloudInvoice.Billing/CloudInvoice.Billing.Infrastructure/Migrations/20260909150824_initial.cs
+/CloudInvoice.Billing/CloudInvoice.Billing.Infrastructure/Migrations/20260909150824_initial.Designer.cs
+/CloudInvoice.Billing/CloudInvoice.Billing.Infrastructure/Migrations/20260907184727_initial.Designer.cs
+/CloudInvoice.Billing/CloudInvoice.Billing.Infrastructure/Migrations/20260907184727_initial.cs
