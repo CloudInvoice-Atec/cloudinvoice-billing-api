@@ -100,6 +100,7 @@ namespace CloudInvoice.Billing.Application.Services
                     Id = i.Id,
                     InvoiceNumber = i.InvoiceNumber,
                     IssueDate = i.IssueDate,
+                    DueDate = i.DueDate,
                     TotalAmount = i.TotalAmount,
                     Status = i.Status
                 })
