@@ -19,7 +19,7 @@ namespace CloudInvoice.Billing.Api.Controllers
 
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<ActionResult<CompanyResponseDto>> GetById(int id)
         {
             var company = await _companyService.GetCompanyByIdAsync(id);

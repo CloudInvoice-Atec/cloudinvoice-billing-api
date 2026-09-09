@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? TradeName { get; set; }
-        public string TaxId { get; set; } = string.Empty; // Equivalente ao TaxId da UI
+        public string TaxId { get; set; } = string.Empty; 
         public bool IsActive { get; set; } = true;
         public decimal? CurrentDebt { get; set; }
         public decimal? CreditLimit { get; set; }
@@ -21,13 +21,13 @@
         public decimal DefaultDiscount { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Responsável Principal
+
         public string? ContactPersonName { get; set; }
         public string? ContactPersonRole { get; set; }
         public string? ContactPersonEmail { get; set; }
         public string? ContactPersonPhone { get; set; }
 
-        // Relacionamento com Faturas
+
         public List<Invoice> Invoices { get; set; } = new List<Invoice>();
     }
 }

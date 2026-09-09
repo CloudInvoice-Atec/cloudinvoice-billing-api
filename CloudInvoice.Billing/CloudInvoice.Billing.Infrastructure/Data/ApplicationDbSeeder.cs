@@ -17,21 +17,30 @@ namespace CloudInvoice.Billing.Infrastructure.Data
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<ApplicationDbContext>();
 
-            // 1. Aplica migrações pendentes
-            //await context.Database.MigrateAsync();
-
-            // 2. Insere a empresa padrão caso a tabela esteja vazia
             if (!await context.Set<Company>().AnyAsync())
             {
                 context.Set<Company>().Add(new Company
                 {
                     Id = 1,
-                    Name = "Minha Empresa Padrão, Lda",
-                    TaxNumber = "999999999",
-                    PrimaryActivityCode = "00000",
-                    Address = "Rua Principal, 123",
+                    Name = "CloudInvoice Lda",
+                    TaxNumber = "500100200",
+                    PrimaryActivityCode = "62010",
+
+                    Address = "Avenida Central, 45, 2º Andar",
+                    PostalCode = "4000-015",
                     City = "Porto",
-                    Country = "Portugal"
+                    Country = "Portugal",
+                    Email = "geral@cloudinvoice.demo",
+                    Phone = "+351 220 000 000",
+                    Website = "https://www.cloudinvoice.demo",
+
+                    RegistryOffice = "Conservatória do Registo Comercial do Porto",
+                    CommercialRegistrationNumber = "500-100-200",
+                    ShareCapital = 50000.00m,
+
+                    BankName = "Banco Exemplo, S.A.",
+                    Iban = "PT50 0000 0000 0000 0000 000 12",
+                    Swift = "EXEMPTPLXXX"
                 });
                 await context.SaveChangesAsync();
             }
