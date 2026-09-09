@@ -1,0 +1,97 @@
+﻿using CloudInvoice.Billing.Domain.Entities;
+using CloudInvoice.Billing.Domain.Interfaces;
+using CloudInvoice.Billing.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CloudInvoice.Billing.Infrastructure.Repositories
+{
+    public class InvoiceRepository : IInvoiceRepository
+    {
+        private readonly ApplicationDbContext _context;
+
+        public InvoiceRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<Invoice?> GetByIdAsync(Guid id)
+        {
+
+            return await _context.Invoices
+                .Include(i => i.Lines)
+                .Include(i => i.Customer)
+                .FirstOrDefaultAsync(i => i.Id == id);
+        }
+
+        public async Task<IEnumerable<Invoice>> GetByUserIdAsync(string userId)
+        {
+            return await _context.Invoices
+                .Where(i => i.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task AddAsync(Invoice invoice)
+        {
+            await _context.Invoices.AddAsync(invoice);
+        }
+        public async Task AddLinesAsync(InvoiceLine invoiceline)
+        {
+            await _context.InvoiceLines.AddAsync(invoiceline);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(Invoice invoice)
+        {
+            _context.Invoices.Update(invoice);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Invoice invoice)
+        {
+            _context.Invoices.Remove(invoice);
+        }
+
+        public async Task<(IEnumerable<Invoice> Invoices, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            int skip = (pageNumber - 1) * pageSize;
+
+            int totalCount = await _context.Invoices.CountAsync();
+
+            var invoices = await _context.Invoices
+                .Include(i => i.Lines) 
+                .OrderByDescending(i => i.IssueDate) 
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (invoices, totalCount);
+        }
+
+        public async Task<IEnumerable<Invoice>> GetRecentInvoicesAsync(int count)
+        {
+            return await _context.Invoices
+                .Include(i => i.Customer)
+                .OrderByDescending(i => i.IssueDate)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Invoice>> GetInvoicesFromDateAsync(DateTime startDate)
+        {
+            return await _context.Invoices
+                .Include(i => i.Customer)
+                .Where(i => i.IssueDate >= startDate)
+                .ToListAsync();
+        }
+
+    }
+}
