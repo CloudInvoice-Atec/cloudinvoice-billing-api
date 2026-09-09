@@ -125,5 +125,63 @@ namespace CloudInvoice.Billing.Api.Controllers
             return Ok(pagedResult);
         }
 
+        [HttpPut("{id}/cancel")]
+        public async Task<IActionResult> CancelInvoice(Guid id)
+        {
+            try
+            {
+                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                              ?? User.FindFirstValue("sub")
+                              ?? User.FindFirstValue("nameid");
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Utilizador não autenticado." });
+                }
+
+                var success = await _invoiceService.CancelInvoiceAsync(id, userId);
+
+                if (!success)
+                {
+                    return BadRequest(new { message = "Não foi possível cancelar a fatura. A fatura não existe, não pertence a este utilizador ou o seu estado atual não permite cancelamento." });
+                }
+
+                return NoContent(); // HTTP 204: Pedido processado com sucesso, sem conteúdo para devolver
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Erro interno: {ex.Message}" });
+            }
+        }
+
+        [HttpPut("{id}/pay")]
+        public async Task<IActionResult> MarkAsPaid(Guid id)
+        {
+            try
+            {
+                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                              ?? User.FindFirstValue("sub")
+                              ?? User.FindFirstValue("nameid");
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Utilizador não autenticado." });
+                }
+
+                var success = await _invoiceService.MarkAsPaidAsync(id, userId);
+
+                if (!success)
+                {
+                    return BadRequest(new { message = "Não foi possível registar o pagamento. A fatura não existe, não lhe pertence ou o seu estado atual não permite pagamento." });
+                }
+
+                return NoContent(); // HTTP 204: Sucesso sem conteúdo devolvido, ativando a UI
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Erro interno: {ex.Message}" });
+            }
+        }
+
     }
 }
