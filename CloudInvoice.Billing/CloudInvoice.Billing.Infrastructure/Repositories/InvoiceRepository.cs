@@ -21,7 +21,7 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
 
         public async Task<Invoice?> GetByIdAsync(Guid id)
         {
-            // Eager loading: bringing the related lines and customer data
+
             return await _context.Invoices
                 .Include(i => i.Lines)
                 .Include(i => i.Customer)
@@ -67,8 +67,8 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
             int totalCount = await _context.Invoices.CountAsync();
 
             var invoices = await _context.Invoices
-                .Include(i => i.Lines) // Inclui as linhas da fatura se necessário
-                .OrderByDescending(i => i.IssueDate) // Ordena pelas mais recentes
+                .Include(i => i.Lines) 
+                .OrderByDescending(i => i.IssueDate) 
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();

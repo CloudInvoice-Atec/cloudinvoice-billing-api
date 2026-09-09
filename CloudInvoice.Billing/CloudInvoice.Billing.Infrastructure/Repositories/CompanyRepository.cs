@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace CloudInvoice.Billing.Infrastructure.Repositories
 {
-    // The class implements the interface, fulfilling the contract
     public class CompanyRepository : ICompanyRepository
     {
         private readonly ApplicationDbContext _context;

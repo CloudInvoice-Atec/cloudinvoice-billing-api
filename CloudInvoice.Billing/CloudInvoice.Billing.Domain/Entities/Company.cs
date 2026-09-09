@@ -14,7 +14,7 @@ namespace CloudInvoice.Billing.Domain.Entities
         public string TaxNumber { get; set; } = string.Empty;
         public string PrimaryActivityCode { get; set; } = string.Empty;
 
-        // Campos de morada e contacto opcionais no arranque
+
         public string? Address { get; set; }
         public string? PostalCode { get; set; }
         public string? City { get; set; }
@@ -24,7 +24,7 @@ namespace CloudInvoice.Billing.Domain.Entities
         public string? Phone { get; set; }
         public string? Website { get; set; }
 
-        // Dados legais e bancários opcionais no arranque
+
         public string? RegistryOffice { get; set; }
         public string? CommercialRegistrationNumber { get; set; }
         public decimal ShareCapital { get; set; }

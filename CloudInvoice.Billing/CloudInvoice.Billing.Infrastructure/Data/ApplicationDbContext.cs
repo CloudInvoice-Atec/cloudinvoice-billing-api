@@ -13,8 +13,7 @@ namespace CloudInvoice.Billing.Infrastructure.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
-        // Define your DbSets here
-        // public DbSet<YourEntity> YourEntities { get; set; }
+
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Company> Companies { get; set; }
@@ -24,14 +23,12 @@ namespace CloudInvoice.Billing.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Diz ao EF Core que o ID da Company não é auto-incrementado pela BD,
-            // permitindo que o nosso Seeder insira o Id = 1 explicitamente com segurança.
+
             modelBuilder.Entity<Company>()
                 .Property(c => c.Id)
                 .ValueGeneratedNever();
 
 
-            // Configuração dos Enums da Invoice para serem guardados como String na BD
             modelBuilder.Entity<Invoice>()
                 .Property(i => i.Status)
                 .HasConversion<string>();
@@ -40,7 +37,7 @@ namespace CloudInvoice.Billing.Infrastructure.Data
                 .Property(i => i.PaymentStatus)
                 .HasConversion<string>();
 
-            // 1:N relationship between Invoice and InvoiceLine
+
             modelBuilder.Entity<Invoice>()
                 .HasMany(i => i.Lines)
                 .WithOne(l => l.Invoice)
@@ -48,7 +45,7 @@ namespace CloudInvoice.Billing.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
 
-            // 1:N relationship between Customer and Invoice
+
             modelBuilder.Entity<Customer>()
                 .HasMany(c => c.Invoices)
                 .WithOne(i => i.Customer)

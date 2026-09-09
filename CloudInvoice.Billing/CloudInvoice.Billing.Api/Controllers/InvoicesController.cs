@@ -12,7 +12,6 @@ namespace CloudInvoice.Billing.Api.Controllers
     [Authorize]
     public class InvoicesController : ControllerBase
     {
-        // O Controller depende apenas da Interface (baixo acoplamento)
         private readonly IInvoiceService _invoiceService;
 
         public InvoicesController(IInvoiceService invoiceService)
@@ -25,7 +24,6 @@ namespace CloudInvoice.Billing.Api.Controllers
         {
             try
             {
-                // 1. CÓDIGO DE DIAGNÓSTICO: Extrai e junta todas as chaves e valores lidos do token
                 var todasAsClaims = string.Join(" | ", User.Claims.Select(c => c.Type + "=" + c.Value));
 
                 string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -34,11 +32,10 @@ namespace CloudInvoice.Billing.Api.Controllers
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    // 2. Devolvemos a lista real de claims para detetar o nome correto
                     return Unauthorized(new
                     {
                         message = "Utilizador não autenticado ou token sem identificador.",
-                        claimsRecebidas = todasAsClaims // Vê o resultado na consola do frontend ou Swagger
+                        claimsRecebidas = todasAsClaims 
                     });
                 }
 
@@ -83,12 +80,10 @@ namespace CloudInvoice.Billing.Api.Controllers
                     return NotFound(new { message = "Invoice not found." });
                 }
 
-                // 204 No Content indica que o recurso foi eliminado com sucesso e não há conteúdo a devolver
                 return NoContent();
             }
             catch (InvalidOperationException ex)
             {
-                // Retorna erro 400 se tentar violar a regra de negócio (ex: apagar fatura emitida)
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
@@ -113,7 +108,6 @@ namespace CloudInvoice.Billing.Api.Controllers
 
 
 
-        // Exemplo de chamada HTTP: GET /api/invoices?pageNumber=1&pageSize=10
         [HttpGet]
         public async Task<ActionResult<PagedResultDto<InvoiceResponseDto>>> GetAllInvoices(
             [FromQuery] int pageNumber = 1,
@@ -121,17 +115,15 @@ namespace CloudInvoice.Billing.Api.Controllers
         {
             var pagedResult = await _invoiceService.GetAllInvoicesAsync(pageNumber, pageSize);
 
-            // Devolvemos um HTTP 200 OK contendo os metadados da paginação e a lista de faturas mapeadas em DTO
             return Ok(pagedResult);
         }
 
         [HttpPut("{id}/cancel")]
-        [Authorize(Roles = "Admin")] // 2. Tranca o endpoint no backend
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CancelInvoice(Guid id)
         {
             try
             {
-                // Já não precisamos de extrair nem passar o userId
                 var success = await _invoiceService.CancelInvoiceAsync(id);
 
                 if (!success)
@@ -148,12 +140,11 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
         [HttpPut("{id}/pay")]
-        [Authorize] // Qualquer utilizador autenticado pode aceder
+        [Authorize]
         public async Task<IActionResult> MarkAsPaid(Guid id)
         {
             try
             {
-                // Já não extraímos nem enviamos o userId
                 var success = await _invoiceService.MarkAsPaidAsync(id);
 
                 if (!success)

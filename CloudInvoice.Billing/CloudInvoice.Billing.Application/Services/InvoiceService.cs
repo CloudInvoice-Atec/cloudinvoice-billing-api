@@ -141,7 +141,6 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<InvoiceResponseDto?> UpdateInvoiceAsync(Guid id, UpdateInvoiceDto request)
         {
-            // 1. Obter a fatura (⚠️ IMPORTANTE: O repositório tem de fazer .Include(i => i.Lines) neste GetById)
             var invoice = await _invoiceRepository.GetByIdAsync(id);
             if (invoice == null)
             {
@@ -159,18 +158,13 @@ namespace CloudInvoice.Billing.Application.Services
             var company = await _companyRepository.GetByIdAsync(1);
             if (company == null) throw new InvalidOperationException("Company settings not configured.");
 
-            // ==========================================================
-            // PASSO A: APAGAR AS LINHAS ANTIGAS IMEDIATAMENTE DA BD
-            // ==========================================================
+
             if (invoice.Lines.Any())
             {
                 invoice.Lines.Clear();
-                await _invoiceRepository.SaveChangesAsync(); // Grava na BD: Faz os DELETEs reais!
+                await _invoiceRepository.SaveChangesAsync();
             }
 
-            // ==========================================================
-            // PASSO B: ATUALIZAR OS DADOS GERAIS DA FATURA
-            // ==========================================================
             invoice.Reference = request.Reference;
             invoice.DueDate = request.DueDate;
             invoice.Status = request.Status;
@@ -187,9 +181,7 @@ namespace CloudInvoice.Billing.Application.Services
             invoice.CompanyTaxNumber = company.TaxNumber;
             invoice.CompanyAddress = company.Address;
 
-            // ==========================================================
-            // PASSO C: CRIAR E CALCULAR AS NOVAS LINHAS (Tudo INSERTS)
-            // ==========================================================
+
             decimal sumTotalBase = 0;
             decimal sumTotalTax = 0;
             decimal sumTotalAmount = 0;
@@ -224,25 +216,17 @@ namespace CloudInvoice.Billing.Application.Services
                 sumTotalTax += valorIva;
                 sumTotalAmount += (baseLiquida + valorIva);
 
-                // Adiciona a nova linha
+          
                 invoice.Lines.Add(invoiceLine);
 
                 await _invoiceRepository.AddLinesAsync(invoiceLine);
 
             }
 
-            // Atribuir totais
             invoice.TotalBase = sumTotalBase;
             invoice.TotalTax = sumTotalTax;
             invoice.TotalAmount = sumTotalAmount;
 
-            // ==========================================================
-            // PASSO D: GRAVAR O UPDATE DA FATURA E OS INSERTS DAS LINHAS
-            // ==========================================================
-            // Nota: Dependendo de como o Repositório genérico do teu colega funciona, 
-            // o UpdateAsync pode voltar a causar problemas. Se der erro novamente, 
-            // basta comentar o UpdateAsync e deixar apenas o SaveChangesAsync.
-            //await _invoiceRepository.UpdateAsync(invoice);
 
             await _invoiceRepository.SaveChangesAsync();
 
