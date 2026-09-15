@@ -1,5 +1,6 @@
 
 using CloudInvoice.Billing.Application.Interfaces;
+using CloudInvoice.Billing.Application.Mappings;
 using CloudInvoice.Billing.Application.Services;
 using CloudInvoice.Billing.Domain.Interfaces;
 using CloudInvoice.Billing.Infrastructure.Data;
@@ -11,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace CloudInvoice.Billing.Api
 {
@@ -23,6 +25,15 @@ namespace CloudInvoice.Billing.Api
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddSingleton(sp =>
+                new MapperConfiguration(
+                    config => config.AddProfile<BillingMappingProfile>(),
+                    sp.GetRequiredService<ILoggerFactory>()));
+            builder.Services.AddSingleton<IMapper>(sp =>
+                new Mapper(
+                    sp.GetRequiredService<MapperConfiguration>(),
+                    sp.GetRequiredService));
+
             builder.Services.AddScoped<IInvoiceService, InvoiceService>();
             builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
@@ -33,14 +44,14 @@ namespace CloudInvoice.Billing.Api
             builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 
-            // Add services to the container.
+
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
-                // 1. Cria o botão "Authorize" e diz ao Swagger como o Token deve ser enviado
+
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "Insere o token JWT desta forma: Bearer {o_teu_token}",
@@ -50,7 +61,7 @@ namespace CloudInvoice.Billing.Api
                     Scheme = "Bearer"
                 });
 
-                // 2. Obriga o Swagger a enviar esse Token em todos os pedidos que fizeres
+
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -65,19 +76,19 @@ namespace CloudInvoice.Billing.Api
                         Array.Empty<string>()
                     }
                 });
-                // Adiciona estas 3 linhas para ler os comentários XML:
+
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
 
-            // 1. Lê a chave secreta do appsettings.json e transforma-a em bytes
+
             var jwtSecret = builder.Configuration["JwtSettings:Secret"];
             var key = Encoding.ASCII.GetBytes(jwtSecret);
 
             System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-            // 2. Configura o serviço de Autenticação
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,33 +96,33 @@ namespace CloudInvoice.Billing.Api
             })
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false; // Em desenvolvimento, podemos deixar false
+                options.RequireHttpsMetadata = false; 
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    // O que é que a Billing.API vai exigir que o Token tenha para o aceitar?
+
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
 
                     ValidateIssuer = true,
-                    ValidIssuer = builder.Configuration["JwtSettings:Issuer"], // Tem de ser o da porta 5001
+                    ValidIssuer = builder.Configuration["JwtSettings:Issuer"], 
 
                     ValidateAudience = true,
-                    ValidAudience = builder.Configuration["JwtSettings:Audience"], // CloudInvoiceUsers
+                    ValidAudience = builder.Configuration["JwtSettings:Audience"], 
 
-                    ValidateLifetime = true // Rejeita tokens que já passaram da validade
+                    ValidateLifetime = true 
                 };
             });
 
             builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 
-            // 1. Lemos o URL da Catalog API que tu configuraste no appsettings.json
+
             var catalogApiUrl = builder.Configuration["ApiUrls:CatalogApi"];
 
             builder.Services.AddHttpClient<ICatalogIntegrationService, CatalogIntegrationService>(client =>
             {
                 client.BaseAddress = new Uri(catalogApiUrl);
-                // Podes também configurar um Timeout para a chamada não ficar pendurada para sempre
+
                 client.Timeout = TimeSpan.FromSeconds(10);
             });
 
@@ -135,7 +146,7 @@ namespace CloudInvoice.Billing.Api
 
             ApplicationDbSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
 
-            // Configure the HTTP request pipeline.
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

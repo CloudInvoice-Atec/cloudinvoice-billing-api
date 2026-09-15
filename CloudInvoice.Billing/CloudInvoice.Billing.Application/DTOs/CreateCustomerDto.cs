@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CloudInvoice.Billing.Application.DTOs
 {
-    // DTO para receber dados de criação de um cliente
+
     public class CreateCustomerDto
     {
         public string Name { get; set; } = string.Empty;

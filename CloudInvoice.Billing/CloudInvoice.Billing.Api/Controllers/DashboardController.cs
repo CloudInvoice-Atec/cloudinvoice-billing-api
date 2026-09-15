@@ -15,6 +15,10 @@ namespace CloudInvoice.Billing.Api.Controllers
             _dashboardService = dashboardService;
         }
 
+        /// <summary>
+        /// Retrieve an overview of the dashboard, including metrics, recent invoices, and revenue chart data.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("overview")]
         public async Task<ActionResult<DashboardOverviewDto>> GetOverview()
         {

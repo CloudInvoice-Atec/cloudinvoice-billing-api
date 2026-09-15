@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CloudInvoice.Billing.Application.DTOs
 {
-    // DTO para retornar os dados do cliente para a API/Frontend
+
     public class CustomerResponseDto
     {
         public Guid Id { get; set; }

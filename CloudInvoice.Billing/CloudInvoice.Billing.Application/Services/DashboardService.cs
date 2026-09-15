@@ -2,6 +2,7 @@
 using CloudInvoice.Billing.Application.Interfaces;
 using CloudInvoice.Billing.Domain.Entities;
 using CloudInvoice.Billing.Domain.Interfaces;
+using AutoMapper;
 using System.Globalization;
 
 namespace CloudInvoice.Billing.Application.Services
@@ -10,11 +11,16 @@ namespace CloudInvoice.Billing.Application.Services
     {
         private readonly IInvoiceRepository _invoiceRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IMapper _mapper;
 
-        public DashboardService(IInvoiceRepository invoiceRepository, ICustomerRepository customerRepository)
+        public DashboardService(
+            IInvoiceRepository invoiceRepository,
+            ICustomerRepository customerRepository,
+            IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
             _customerRepository = customerRepository;
+            _mapper = mapper;
         }
 
         public async Task<DashboardOverviewDto> GetDashboardOverviewAsync()
@@ -23,41 +29,34 @@ namespace CloudInvoice.Billing.Application.Services
             var startOfMonth = new DateTime(now.Year, now.Month, 1);
             var sixMonthsAgo = startOfMonth.AddMonths(-5);
 
-            // 1. Obtém apenas as faturas dos últimos 6 meses para o gráfico e métricas do mês
+
             var recentInvoicesDb = await _invoiceRepository.GetInvoicesFromDateAsync(sixMonthsAgo);
             var allCustomers = await _customerRepository.GetAllAsync();
 
             var invoicesList = recentInvoicesDb.ToList();
             var currentMonthInvoices = invoicesList.Where(i => i.IssueDate >= startOfMonth).ToList();
 
-            // 2. Métricas
+
             var metrics = new DashboardMetricsDto
             {
                 TotalRevenue = currentMonthInvoices.Sum(i => i.TotalAmount),
                 InvoicesCount = currentMonthInvoices.Count,
-                // Faturas vencidas: data de vencimento ultrapassada e por pagar
+
                 OverdueAmount = invoicesList
                     .Where(i => i.DueDate < DateTime.UtcNow && i.PaymentStatus != PaymentStatus.Paid)
                     .Sum(i => i.TotalAmount),
                 NewCustomersCount = allCustomers.Count(c => c.CreatedAt >= startOfMonth)
             };
 
-            // 3. Faturas Recentes (Últimas 5 - Exclui Drafts, mostra apenas Issued)
+
             var recentInvoices = invoicesList
-                .Where(i => i.Status == InvoiceStatus.Issued) // 👈 Filtro adicionado aqui
+                .Where(i => i.Status == InvoiceStatus.Issued) 
                 .OrderByDescending(i => i.IssueDate)
                 .Take(5)
-                .Select(i => new RecentInvoiceDto
-                {
-                    Id = i.Id,
-                    InvoiceNumber = i.InvoiceNumber,
-                    CustomerName = i.Customer?.Name ?? "Desconhecido",
-                    IssueDate = i.IssueDate,
-                    TotalAmount = i.TotalAmount,
-                    Status = i.Status.ToString()
-                }).ToList();
+                .Select(i => _mapper.Map<RecentInvoiceDto>(i))
+                .ToList();
 
-            // 4. Gráfico de Evolução (Últimos 6 meses)
+
             var chartData = invoicesList
                 .GroupBy(i => new { i.IssueDate.Year, i.IssueDate.Month })
                 .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
