@@ -103,27 +103,19 @@ namespace CloudInvoice.Billing.Application.Services
             // ==========================================================
             // PASSO C: CRIAR A ENTIDADE FATURA (DOMÍNIO)
             // ==========================================================
-            var invoice = new Invoice
-            {
-                Id = Guid.NewGuid(),
-                InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}",
-                Reference = request.Reference,
-                UserId = userId,
-                IssueDate = request.IssueDate,
-                DueDate = request.DueDate,
-                Status = request.Status,
-                PaymentStatus = request.PaymentStatus,
-                Notes = request.Notes,
+            var invoice = _mapper.Map<Invoice>(request);
+            invoice.Id = Guid.NewGuid();
+            invoice.InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}";
+            invoice.UserId = userId;
 
-                // Imutabilidade
-                CustomerId = customer.Id,
-                CustomerName = customer.Name,
-                CustomerTaxNumber = customer.TaxId,
-                CustomerAddress = customer.Address,
-                CompanyName = company.Name,
-                CompanyTaxNumber = company.TaxNumber,
-                CompanyAddress = company.Address
-            };
+            // Imutabilidade: snapshots são preenchidos a partir dos dados atuais.
+            invoice.CustomerId = customer.Id;
+            invoice.CustomerName = customer.Name;
+            invoice.CustomerTaxNumber = customer.TaxId;
+            invoice.CustomerAddress = customer.Address ?? string.Empty;
+            invoice.CompanyName = company.Name;
+            invoice.CompanyTaxNumber = company.TaxNumber;
+            invoice.CompanyAddress = company.Address ?? string.Empty;
 
             // ==========================================================
             // PASSO D: CRIAR AS LINHAS
@@ -134,17 +126,12 @@ namespace CloudInvoice.Billing.Application.Services
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
                 decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
 
-                var invoiceLine = new InvoiceLine
-                {
-                    Id = Guid.NewGuid(),
-                    InvoiceId = invoice.Id,
-                    ProductId = itemDto.ProductId,
-                    Description = availability.ProductDescription,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = unitPrice,
-                    DiscountPercentage = itemDto.DiscountPercentage,
-                    TaxRate = taxRate
-                };
+                var invoiceLine = _mapper.Map<InvoiceLine>(itemDto);
+                invoiceLine.Id = Guid.NewGuid();
+                invoiceLine.InvoiceId = invoice.Id;
+                invoiceLine.Description = availability.ProductDescription;
+                invoiceLine.UnitPrice = unitPrice;
+                invoiceLine.TaxRate = taxRate;
 
                 invoice.Lines.Add(invoiceLine);
             }
@@ -197,9 +184,11 @@ namespace CloudInvoice.Billing.Application.Services
 
                 // Calculamos os totais em memória para usar na validação de crédito
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
+                decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
+
                 decimal bruto = itemDto.Quantity * unitPrice;
                 decimal baseLiquida = bruto * (1 - (itemDto.DiscountPercentage / 100m));
-                decimal valorIva = baseLiquida * (itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate / 100m);
+                decimal valorIva = baseLiquida * (taxRate / 100m);
 
                 sumTotalBase += baseLiquida;
                 sumTotalTax += valorIva;
@@ -255,17 +244,14 @@ namespace CloudInvoice.Billing.Application.Services
                 var availability = catalogData[itemDto.ProductId];
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
 
-                invoice.Lines.Add(new InvoiceLine
-                {
-                    Id = Guid.NewGuid(),
-                    InvoiceId = invoice.Id,
-                    ProductId = itemDto.ProductId,
-                    Description = availability.ProductDescription,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = unitPrice,
-                    DiscountPercentage = itemDto.DiscountPercentage,
-                    TaxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate
-                });
+                var invoiceLine = _mapper.Map<InvoiceLine>(itemDto);
+                invoiceLine.Id = Guid.NewGuid();
+                invoiceLine.InvoiceId = invoice.Id;
+                invoiceLine.Description = availability.ProductDescription;
+                invoiceLine.UnitPrice = unitPrice;
+                invoiceLine.TaxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
+
+                invoice.Lines.Add(invoiceLine);
             }
 
             invoice.TotalBase = sumTotalBase;
