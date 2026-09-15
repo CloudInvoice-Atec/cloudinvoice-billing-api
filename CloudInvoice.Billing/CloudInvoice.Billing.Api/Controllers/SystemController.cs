@@ -11,7 +11,7 @@ namespace CloudInvoice.Billing.Api.Controllers
         private readonly IHealthCheckService _healthCheckService = healthCheckService;
 
         /// <summary>
-        /// Verifica se a API está online e se a Base de Dados está acessível.
+        /// Verifies the health of the API and its connection to the database.
         /// </summary>
         [HttpGet("health")]
         [ProducesResponseType(StatusCodes.Status200OK)]

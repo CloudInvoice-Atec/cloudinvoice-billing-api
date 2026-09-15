@@ -19,6 +19,13 @@ namespace CloudInvoice.Billing.Api.Controllers
             _invoiceService = invoiceService;
         }
 
+
+
+        /// <summary>
+        /// Creates a new invoice for the authenticated user.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<ActionResult<InvoiceResponseDto>> CreateInvoice([FromBody] CreateInvoiceDto request)
         {
@@ -49,6 +56,14 @@ namespace CloudInvoice.Billing.Api.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// Updates an existing invoice by its ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<InvoiceResponseDto>> UpdateInvoice(Guid id, [FromBody] UpdateInvoiceDto request)
         {
@@ -69,6 +84,13 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
 
+
+
+        /// <summary>
+        /// Deletes an invoice by its ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteInvoice(Guid id)
         {
@@ -93,7 +115,11 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
 
-
+        /// <summary>
+        /// Retrieves an invoice by its ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<InvoiceResponseDto>> GetById(Guid id)
         {
@@ -107,7 +133,12 @@ namespace CloudInvoice.Billing.Api.Controllers
         }
 
 
-
+        /// <summary>
+        /// Retrieves a paginated list of all invoices.
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<PagedResultDto<InvoiceResponseDto>>> GetAllInvoices(
             [FromQuery] int pageNumber = 1,
@@ -118,6 +149,13 @@ namespace CloudInvoice.Billing.Api.Controllers
             return Ok(pagedResult);
         }
 
+
+
+        /// <summary>
+        /// Cancels an invoice by its ID. Only users with the "Admin" role can perform this action.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpPut("{id}/cancel")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CancelInvoice(Guid id)
@@ -139,6 +177,13 @@ namespace CloudInvoice.Billing.Api.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// Marks an invoice as paid by its ID. Only users with the "Admin" role can perform this action.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpPut("{id}/pay")]
         [Authorize]
         public async Task<IActionResult> MarkAsPaid(Guid id)
