@@ -32,21 +32,73 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<InvoiceResponseDto> CreateInvoiceAsync(string userId, CreateInvoiceDto request)
         {
-            // 1. Fetch the Customer from our database
+            // 1. Fetch the Customer and Company
             var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
-            if (customer == null)
-            {
-                throw new ArgumentException("Customer not found.");
-            }
+            if (customer == null) throw new ArgumentException("Customer not found.");
 
-            // 2. Fetch our Company details (Assumindo que a empresa principal tem o ID 1)
             var company = await _companyRepository.GetByIdAsync(1);
-            if (company == null)
+            if (company == null) throw new InvalidOperationException("Company settings not configured.");
+
+            // ==========================================================
+            // PASSO A: VALIDAR PRODUTOS EM BULK E CALCULAR TOTAIS
+            // ==========================================================
+            // NOTA: Substitui "CatalogItemAvailability" pelo teu DTO real que descobriste há pouco!
+            var catalogData = new Dictionary<Guid, AvailabilityResponseDto>();
+            var produtosInativos = new List<string>();
+
+            decimal sumTotalBase = 0;
+            decimal sumTotalTax = 0;
+            decimal sumTotalAmount = 0;
+
+            foreach (var itemDto in request.Items)
             {
-                throw new InvalidOperationException("Company settings not configured.");
+                var availability = await _catalogIntegrationService.CheckAvailabilityAsync(itemDto.ProductId);
+                catalogData[itemDto.ProductId] = availability;
+
+                // Regista o produto na lista negra em vez de explodir logo a app
+                if (!availability.IsAvailable)
+                {
+                    produtosInativos.Add(availability.ProductDescription ?? "Produto Desconhecido");
+                }
+
+                // Matemática usando as regras corretas de precedência
+                decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
+                decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
+
+                decimal bruto = itemDto.Quantity * unitPrice;
+                decimal baseLiquida = bruto * (1 - (itemDto.DiscountPercentage / 100m));
+                decimal valorIva = baseLiquida * (taxRate / 100m);
+
+                sumTotalBase += baseLiquida;
+                sumTotalTax += valorIva;
+                sumTotalAmount += (baseLiquida + valorIva);
             }
 
-            // 3. Initialize the Domain Entity (The actual Invoice)
+            // REGRA 1: Produtos inativos em Bulk
+            // Impede a gravação e devolve uma mensagem agregada para o ecrã Blazor
+            if (produtosInativos.Any())
+            {
+                throw new InvalidOperationException($"Tem produtos inativos na fatura: {string.Join(", ", produtosInativos)}. Por favor, remova-os para poder guardar ou emitir a fatura.");
+            }
+
+            // ==========================================================
+            // PASSO B: VALIDAR LIMITE DE CRÉDITO
+            // ==========================================================
+            if (customer.CreditLimit > 0)
+            {
+                // Tem de ter aquele método novo no repositório para somar as faturas não pagas
+                decimal dividaAtual = await _customerRepository.GetTotalDebtByCustomerIdAsync(customer.Id);
+
+                if ((dividaAtual + sumTotalAmount) > customer.CreditLimit)
+                {
+                    throw new InvalidOperationException(
+                        $"Limite de crédito excedido! Limite: {customer.CreditLimit:C2} | Em Dívida: {dividaAtual:C2} | Valor desta Fatura: {sumTotalAmount:C2}");
+                }
+            }
+
+            // ==========================================================
+            // PASSO C: CRIAR A ENTIDADE FATURA (DOMÍNIO)
+            // ==========================================================
             var invoice = new Invoice
             {
                 Id = Guid.NewGuid(),
@@ -55,62 +107,29 @@ namespace CloudInvoice.Billing.Application.Services
                 UserId = userId,
                 IssueDate = request.IssueDate,
                 DueDate = request.DueDate,
-
-                // Atribuição direta dos Enums do Domínio (Type Safety)
                 Status = request.Status,
                 PaymentStatus = request.PaymentStatus,
                 Notes = request.Notes,
 
-                // Active Relationships
+                // Imutabilidade
                 CustomerId = customer.Id,
-
-                // Data Immutability: Freezing the data at the time of purchase
                 CustomerName = customer.Name,
                 CustomerTaxNumber = customer.TaxId,
                 CustomerAddress = customer.Address,
-
-                // Ajustado para as propriedades reais da entidade Company (Name em vez de LegalName)
                 CompanyName = company.Name,
                 CompanyTaxNumber = company.TaxNumber,
                 CompanyAddress = company.Address
             };
-            // 4. Process each item in the request DTO
 
-            decimal sumTotalBase = 0;
-            decimal sumTotalTax = 0;
-            decimal sumTotalAmount = 0;
-
+            // ==========================================================
+            // PASSO D: CRIAR AS LINHAS
+            // ==========================================================
             foreach (var itemDto in request.Items)
             {
-                // Call the external Catalog.API via our integration service
-                var availability = await _catalogIntegrationService.CheckAvailabilityAsync(itemDto.ProductId);
-
-                if (!availability.IsAvailable)
-                {
-                    throw new InvalidOperationException($"Product {itemDto.ProductId} is not available.");
-                }
-
+                var availability = catalogData[itemDto.ProductId];
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
                 decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
-                decimal discountPercentage = itemDto.DiscountPercentage;
 
-                // 1. Valor bruto da linha
-                decimal bruto = itemDto.Quantity * itemDto.BasePrice;
-
-                // 2. Base Líquida (já com o desconto abatido)
-                // Se DiscountPercentage for 50, fica 50/100 = 0.5. Bruto * (1 - 0.5)
-                decimal baseLiquida = bruto * (1 - (itemDto.DiscountPercentage / 100m));
-
-                // 3. Valor do IVA sobre a base líquida
-                decimal valorIva = baseLiquida * (itemDto.TaxRate / 100m);
-
-                // 4. Acumular para os totais globais da fatura
-                sumTotalBase += baseLiquida;
-                sumTotalTax += valorIva;
-                sumTotalAmount += (baseLiquida + valorIva);
-
-
-                // Map data to the Domain Entity (InvoiceLine)
                 var invoiceLine = new InvoiceLine
                 {
                     Id = Guid.NewGuid(),
@@ -119,19 +138,20 @@ namespace CloudInvoice.Billing.Application.Services
                     Description = availability.ProductDescription,
                     Quantity = itemDto.Quantity,
                     UnitPrice = unitPrice,
-                    TaxRate = taxRate,
-                    DiscountPercentage = discountPercentage
+                    DiscountPercentage = itemDto.DiscountPercentage,
+                    TaxRate = taxRate
                 };
 
                 invoice.Lines.Add(invoiceLine);
             }
 
-            // 5. Calculate Totals
             invoice.TotalBase = sumTotalBase;
             invoice.TotalTax = sumTotalTax;
             invoice.TotalAmount = sumTotalAmount;
 
-            // 6. Save using the Repository
+            // ==========================================================
+            // PASSO E: GRAVAR NA BASE DE DADOS
+            // ==========================================================
             await _invoiceRepository.AddAsync(invoice);
             await _invoiceRepository.SaveChangesAsync();
 
@@ -141,24 +161,73 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<InvoiceResponseDto?> UpdateInvoiceAsync(Guid id, UpdateInvoiceDto request)
         {
-            var invoice = await _invoiceRepository.GetByIdAsync(id);
-            if (invoice == null)
-            {
-                return null;
-            }
-
-            if (invoice.Status != InvoiceStatus.Draft)
-            {
-                throw new InvalidOperationException("Cannot update a non-draft invoice.");
-            }
+            var invoice = await _invoiceRepository.GetByIdAsync(id); // Lembrar do .Include(i => i.Lines)
+            if (invoice == null) return null;
+            if (invoice.Status != InvoiceStatus.Draft) throw new InvalidOperationException("Apenas rascunhos podem ser editados.");
 
             var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
-            if (customer == null) throw new ArgumentException("Customer not found.");
+            if (customer == null) throw new ArgumentException("Cliente não encontrado.");
 
             var company = await _companyRepository.GetByIdAsync(1);
-            if (company == null) throw new InvalidOperationException("Company settings not configured.");
 
+            // ==========================================================
+            // PASSO A: VALIDAR PRODUTOS EM BULK E CALCULAR TOTAIS
+            // ==========================================================
+            var catalogData = new Dictionary<Guid, AvailabilityResponseDto>();
+            var produtosInativos = new List<string>(); // Acumulador de erros
 
+            decimal sumTotalBase = 0;
+            decimal sumTotalTax = 0;
+            decimal sumTotalAmount = 0;
+
+            foreach (var itemDto in request.Items)
+            {
+                var availability = await _catalogIntegrationService.CheckAvailabilityAsync(itemDto.ProductId);
+                catalogData[itemDto.ProductId] = availability;
+
+                // Se estiver inativo, guardamos o nome para avisar o utilizador
+                if (!availability.IsAvailable)
+                {
+                    produtosInativos.Add(availability.ProductDescription ?? "Desconhecido");
+                }
+
+                // Calculamos os totais em memória para usar na validação de crédito
+                decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
+                decimal bruto = itemDto.Quantity * unitPrice;
+                decimal baseLiquida = bruto * (1 - (itemDto.DiscountPercentage / 100m));
+                decimal valorIva = baseLiquida * (itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate / 100m);
+
+                sumTotalBase += baseLiquida;
+                sumTotalTax += valorIva;
+                sumTotalAmount += (baseLiquida + valorIva);
+            }
+
+            // REGRA 1: Bloquear imediatamente se houver produtos inativos
+            if (produtosInativos.Any())
+            {
+                throw new InvalidOperationException($"Tem produtos inativos na fatura: {string.Join(", ", produtosInativos)}. Por favor, remova-os para poder guardar ou emitir a fatura.");
+            }
+
+            // ==========================================================
+            // PASSO B: VALIDAR LIMITE DE CRÉDITO
+            // ==========================================================
+            // Assumindo que Customer tem uma propriedade CreditLimit. Se for null ou 0, não tem limite.
+            if (customer.CreditLimit > 0)
+            {
+                decimal dividaAtual = await _customerRepository.GetTotalDebtByCustomerIdAsync(customer.Id);
+
+                // Se a dívida atual + o total DESTA fatura ultrapassar o limite
+                if ((dividaAtual + sumTotalAmount) > customer.CreditLimit)
+                {
+                    throw new InvalidOperationException(
+                        $"Limite de crédito excedido! Limite: {customer.CreditLimit:C2} | Em Dívida: {dividaAtual:C2} | Valor desta Fatura: {sumTotalAmount:C2}");
+                }
+            }
+
+            // ==========================================================
+            // PASSO C: APLICAR ALTERAÇÕES NA BASE DE DADOS
+            // (Como já validámos tudo, agora é seguro apagar as linhas antigas)
+            // ==========================================================
             if (invoice.Lines.Any())
             {
                 invoice.Lines.Clear();
@@ -182,20 +251,12 @@ namespace CloudInvoice.Billing.Application.Services
             invoice.CompanyAddress = company.Address;
 
 
-            decimal sumTotalBase = 0;
-            decimal sumTotalTax = 0;
-            decimal sumTotalAmount = 0;
-
             foreach (var itemDto in request.Items)
             {
-                var availability = await _catalogIntegrationService.CheckAvailabilityAsync(itemDto.ProductId);
-                if (!availability.IsAvailable)
-                    throw new InvalidOperationException($"Product {itemDto.ProductId} is not available.");
-
+                var availability = catalogData[itemDto.ProductId];
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
-                decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
 
-                var invoiceLine = new InvoiceLine
+                invoice.Lines.Add(new InvoiceLine
                 {
                     Id = Guid.NewGuid(),
                     InvoiceId = invoice.Id,
@@ -204,30 +265,16 @@ namespace CloudInvoice.Billing.Application.Services
                     Quantity = itemDto.Quantity,
                     UnitPrice = unitPrice,
                     DiscountPercentage = itemDto.DiscountPercentage,
-                    TaxRate = taxRate
-                };
-
-                // Matemática
-                decimal bruto = invoiceLine.Quantity * invoiceLine.UnitPrice;
-                decimal baseLiquida = bruto * (1 - (invoiceLine.DiscountPercentage / 100m));
-                decimal valorIva = baseLiquida * (invoiceLine.TaxRate / 100m);
-
-                sumTotalBase += baseLiquida;
-                sumTotalTax += valorIva;
-                sumTotalAmount += (baseLiquida + valorIva);
-
-          
-                invoice.Lines.Add(invoiceLine);
-
-                await _invoiceRepository.AddLinesAsync(invoiceLine);
-
+                    TaxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate
+                });
             }
 
             invoice.TotalBase = sumTotalBase;
             invoice.TotalTax = sumTotalTax;
             invoice.TotalAmount = sumTotalAmount;
 
-
+            // Gravar o resultado final
+            await _invoiceRepository.UpdateAsync(invoice); // Opcional dependendo da implementação do Repositório
             await _invoiceRepository.SaveChangesAsync();
 
             return MapToResponseDto(invoice);
