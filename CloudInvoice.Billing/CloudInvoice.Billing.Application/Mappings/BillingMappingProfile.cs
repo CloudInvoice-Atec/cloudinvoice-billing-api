@@ -16,13 +16,29 @@ namespace CloudInvoice.Billing.Application.Mappings
             CreateMap<CreateCustomerDto, Customer>()
                 .ForMember(destination => destination.Id, options => options.Ignore())
                 .ForMember(destination => destination.CreatedAt, options => options.Ignore())
-                .ForMember(destination => destination.Invoices, options => options.Ignore());
+                .ForMember(destination => destination.Invoices, options => options.Ignore())
+                .ForMember(destination => destination.TradeName, options => options.Ignore())
+                .ForMember(destination => destination.CurrentDebt, options => options.Ignore())
+                .ForMember(destination => destination.CreditLimit, options => options.Ignore())
+                .ForMember(destination => destination.TotalInvoiced, options => options.Ignore())
+                .ForMember(destination => destination.PaymentTermsDays, options => options.Ignore())
+                .ForMember(destination => destination.Email, options => options.Ignore())
+                .ForMember(destination => destination.Phone, options => options.Ignore())
+                .ForMember(destination => destination.Website, options => options.Ignore())
+                .ForMember(destination => destination.Address, options => options.Ignore())
+                .ForMember(destination => destination.City, options => options.Ignore())
+                .ForMember(destination => destination.PostalCode, options => options.Ignore())
+                .ForMember(destination => destination.Country, options => options.Ignore())
+                .ForMember(destination => destination.DefaultDiscount, options => options.Ignore())
+                .ForMember(destination => destination.ContactPersonRole, options => options.Ignore())
+                .ForMember(destination => destination.ContactPersonPhone, options => options.Ignore());
             CreateMap<UpdateCustomerDto, Customer>()
                 .ForMember(destination => destination.Id, options => options.Ignore())
                 .ForMember(destination => destination.CurrentDebt, options => options.Ignore())
                 .ForMember(destination => destination.TotalInvoiced, options => options.Ignore())
                 .ForMember(destination => destination.CreatedAt, options => options.Ignore())
-                .ForMember(destination => destination.Invoices, options => options.Ignore());
+                .ForMember(destination => destination.Invoices, options => options.Ignore())
+                .ForMember(destination => destination.Website, options => options.Ignore());
             CreateMap<Customer, CustomerResponseDto>();
 
             CreateMap<CreateInvoiceDto, Invoice>()
