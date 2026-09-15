@@ -14,5 +14,7 @@ namespace CloudInvoice.Billing.Domain.Interfaces
         void Update(Customer customer);
         Task<bool> SaveChangesAsync();
         Task<IEnumerable<Customer>> GetAllAsync();
+
+        Task<decimal> GetTotalDebtByCustomerIdAsync(Guid customerId);
     }
 }

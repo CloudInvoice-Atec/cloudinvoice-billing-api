@@ -47,5 +47,15 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
         {
             return await _context.Set<Customer>().ToListAsync();
         }
+
+        public async Task<decimal> GetTotalDebtByCustomerIdAsync(Guid customerId)
+        {
+            // Soma o total das faturas que estão Emitidas (Issued) e que não estão Pagas (Paid)
+            return await _context.Invoices
+                .Where(i => i.CustomerId == customerId
+                         && i.Status == InvoiceStatus.Issued
+                         && i.PaymentStatus != PaymentStatus.Paid)
+                .SumAsync(i => i.TotalAmount);
+        }
     }
 }
