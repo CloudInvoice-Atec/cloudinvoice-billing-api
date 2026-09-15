@@ -50,7 +50,7 @@ namespace CloudInvoice.Billing.Infrastructure.Repositories
 
         public async Task<decimal> GetTotalDebtByCustomerIdAsync(Guid customerId)
         {
-            // Soma o total das faturas que estão Emitidas (Issued) e que não estão Pagas (Paid)
+
             return await _context.Invoices
                 .Where(i => i.CustomerId == customerId
                          && i.Status == InvoiceStatus.Issued

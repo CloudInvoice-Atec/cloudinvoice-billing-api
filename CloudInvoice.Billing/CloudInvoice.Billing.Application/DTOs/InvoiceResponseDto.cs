@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CloudInvoice.Billing.Application.DTOs
 {
-    // Histórico de Faturas, devolver a informação já processada e limpa.
+
     public class InvoiceResponseDto
     {
         public Guid Id { get; set; }
@@ -16,12 +16,12 @@ namespace CloudInvoice.Billing.Application.DTOs
         public DateTime IssueDate { get; set; }
         public DateTime DueDate { get; set; }
 
-        // Mapeados como Enums para que o .NET os serializa automaticamente como Strings na API
+
         public InvoiceStatus Status { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public string? Notes { get; set; }
 
-        // Emphasizing immutability: we return the frozen data
+
         public Guid CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerTaxNumber { get; set; } = string.Empty;
@@ -31,7 +31,7 @@ namespace CloudInvoice.Billing.Application.DTOs
         public string CompanyTaxNumber { get; set; }
         public string CompanyAddress { get; set; }
 
-        // Formatted totals for the frontend
+
         public decimal TotalBase { get; set; }
         public decimal TotalTax { get; set; }
         public decimal TotalAmount { get; set; }

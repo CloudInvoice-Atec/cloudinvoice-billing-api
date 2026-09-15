@@ -10,17 +10,13 @@ namespace CloudInvoice.Billing.Infrastructure.Data
 {
     public static class ApplicationDbSeeder
     {
-        // ==============================================================================
-        // DADOS AUXILIARES PARA SEEDING
-        // ==============================================================================
 
-        // Clientes
         private static readonly string[] CompanyPrefixes = { "Comércio", "Indústria", "Serviços", "Soluções", "Consultoria", "Distribuição", "Tecnologias", "Construções", "Transportes", "Design", "Engenharia", "Logística", "Importação", "Exportação", "Manutenção" };
         private static readonly string[] CompanyWords = { "Atlântico", "Central", "Nacional", "Ibérico", "Norte", "Sul", "Moderno", "Global", "Premium", "Rápido", "Digital", "Verde", "Urbano", "Costa", "Litoral" };
         private static readonly string[] LegalForms = { "Lda", "SA", "Unipessoal Lda" };
         private static readonly string[] Cities = { "Porto", "Lisboa", "Braga", "Coimbra", "Aveiro", "Faro", "Setúbal", "Leiria", "Viseu", "Guimarães" };
 
-        // Produtos (Artigos reais do seed da Catalog.API para gerar faturas)
+
         private static readonly (Guid ProductId, string Description, decimal UnitPrice, decimal TaxRate)[] SeedProducts =
         {
             (new Guid("a0000001-0000-0000-0000-000000000001"), "Teclado Mecânico RGB", 45.90m, 23m),
@@ -34,9 +30,7 @@ namespace CloudInvoice.Billing.Infrastructure.Data
             (new Guid("a0000001-0000-0000-0000-000000000010"), "Fita Adesiva", 25.00m, 23m),
         };
 
-        // ==============================================================================
-        // MÉTODO PRINCIPAL DE ORQUESTRAÇÃO
-        // ==============================================================================
+
 
         public static async Task SeedAsync(IServiceProvider serviceProvider)
         {
@@ -44,18 +38,13 @@ namespace CloudInvoice.Billing.Infrastructure.Data
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<ApplicationDbContext>();
 
-            // 1. Aplica migrações pendentes (se necessário, descomentar)
-            // await context.Database.MigrateAsync();
 
-            // 2. Executar os seeders por ordem estrita de dependências
             await SeedCompanyAsync(context);
             await SeedCustomersAsync(context, 60);
             await SeedInvoicesAsync(context, 100);
         }
 
-        // ==============================================================================
-        // MÉTODOS PRIVADOS DE SEEDING
-        // ==============================================================================
+
 
         private static async Task SeedCompanyAsync(ApplicationDbContext context)
         {
@@ -150,13 +139,13 @@ namespace CloudInvoice.Billing.Infrastructure.Data
             var customers = await context.Set<Customer>().ToListAsync();
             var company = await context.Set<Company>().FirstOrDefaultAsync(c => c.Id == 1);
 
-            // Precisa de clientes e empresa já semeados antes de conseguir criar faturas
+
             if (!customers.Any() || company is null)
             {
                 return;
             }
 
-            var random = new Random(42); // seed fixa - resultados sempre iguais entre arranques
+            var random = new Random(42); 
             var statuses = new[] { InvoiceStatus.Draft, InvoiceStatus.Issued, InvoiceStatus.Canceled };
             var paymentStatuses = new[] { PaymentStatus.Unpaid, PaymentStatus.PartiallyPaid, PaymentStatus.Paid };
 
@@ -167,7 +156,7 @@ namespace CloudInvoice.Billing.Infrastructure.Data
                 var customer = customers[random.Next(customers.Count)];
                 var status = statuses[random.Next(statuses.Length)];
 
-                // Faturas canceladas ou em rascunho não fazem sentido como "pagas"
+
                 var paymentStatus = status == InvoiceStatus.Issued
                     ? paymentStatuses[random.Next(paymentStatuses.Length)]
                     : PaymentStatus.Unpaid;

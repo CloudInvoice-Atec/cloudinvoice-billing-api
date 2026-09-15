@@ -13,12 +13,12 @@ namespace CloudInvoice.Billing.Application.DTOs
         public string TaxId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
 
-        // Limites e condições comerciais editáveis
+
         public decimal? CreditLimit { get; set; }
         public int? PaymentTermsDays { get; set; }
         public decimal DefaultDiscount { get; set; }
 
-        // Contactos e Morada
+
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }
@@ -26,7 +26,7 @@ namespace CloudInvoice.Billing.Application.DTOs
         public string? PostalCode { get; set; }
         public string? Country { get; set; }
 
-        // Pessoa de Contacto
+
         public string? ContactPersonName { get; set; }
         public string? ContactPersonRole { get; set; }
         public string? ContactPersonEmail { get; set; }

@@ -12,16 +12,16 @@ namespace CloudInvoice.Billing.Infrastructure.Data
     {
         public static async Task SeedAsync(ApplicationDbContext context)
         {
-            // Garante que a base de dados está criada
+
             await context.Database.EnsureCreatedAsync();
 
-            // Se já existir algum cliente, não faz nada para evitar duplicações
+
             if (await context.Set<Customer>().AnyAsync())
             {
                 return;
             }
 
-            // Insere clientes de teste iniciais
+
             var customers = new[]
             {
                 new Customer

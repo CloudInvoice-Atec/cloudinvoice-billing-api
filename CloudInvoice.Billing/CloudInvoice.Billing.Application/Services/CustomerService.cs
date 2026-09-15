@@ -24,7 +24,7 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<CustomerResponseDto> CreateCustomerAsync(CreateCustomerDto request)
         {
-            // Mapeamento alinhado com o novo DTO de onboarding rápido
+
             var customer = _mapper.Map<Customer>(request);
             customer.Id = Guid.NewGuid();
             customer.CreatedAt = DateTime.UtcNow;
@@ -45,15 +45,14 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<IEnumerable<InvoiceSummaryDto>> GetCustomerInvoicesAsync(Guid customerId, int count)
         {
-            // Validamos se o cliente existe primeiro
+
             var customer = await _customerRepository.GetByIdAsync(customerId);
             if (customer == null)
             {
                 return Enumerable.Empty<InvoiceSummaryDto>();
             }
 
-            // Filtramos as faturas do cliente, ordenamos pelas mais recentes e limitamos a quantidade (ex: Take(5))
-            // Nota: Certifica-te de que a entidade Invoice tem propriedades como IssueDate, TotalAmount, etc.
+
             var invoices = customer.Invoices
                 .OrderByDescending(i => i.IssueDate)
                 .Take(count)
@@ -66,17 +65,17 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<bool> UpdateCustomerAsync(Guid id, UpdateCustomerDto request)
         {
-            // Procuramos o cliente existente pelo ID através do repositório
+
             var customer = await _customerRepository.GetByIdAsync(id);
             if (customer == null)
             {
-                return false; // Cliente não encontrado
+                return false; 
             }
 
             _mapper.Map(request, customer);
 
-            // Atualizamos no repositório e guardamos as alterações
-            _customerRepository.Update(customer); // (Certifica-te que o teu repositório tem o método Update ou usa a tracking do EF Core)
+
+            _customerRepository.Update(customer); 
             await _customerRepository.SaveChangesAsync();
 
             return true;
@@ -86,15 +85,15 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<bool> DeleteCustomerAsync(Guid id)
         {
-            // Procuramos o cliente existente pelo ID através do repositório
+
             var customer = await _customerRepository.GetByIdAsync(id);
             if (customer == null)
             {
-                return false; // Cliente não encontrado
+                return false; 
             }
-            // Aqui, em vez de remover fisicamente, podemos apenas marcar como inativo
+
             customer.IsActive = false;
-            _customerRepository.Update(customer); // (Certifica-te que o teu repositório tem o método Update ou usa a tracking do EF Core)
+            _customerRepository.Update(customer); 
             await _customerRepository.SaveChangesAsync();
             return true;
         }
@@ -105,11 +104,10 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<PagedResultDto<CustomerResponseDto>> GetPagedCustomersAsync(CustomerQueryParameters parameters)
         {
-            // 1. Obter a query base (Idealmente o repositório deve devolver IQueryable para filtrar na DB)
+
             var query = await _customerRepository.GetAllAsync();
             var queryable = query.AsQueryable();
 
-            // 2. Aplicar Filtro de Pesquisa (Nome, NIF ou Email)
             if (!string.IsNullOrWhiteSpace(parameters.Search))
             {
                 var searchLower = parameters.Search.ToLower();
@@ -119,24 +117,24 @@ namespace CloudInvoice.Billing.Application.Services
                     (c.Email != null && c.Email.ToLower().Contains(searchLower)));
             }
 
-            // 3. Aplicar Filtro de Estado
+
             if (parameters.IsActive.HasValue)
             {
                 queryable = queryable.Where(c => c.IsActive == parameters.IsActive.Value);
             }
 
-            // 4. Calcular Totais
+
             var totalCount = queryable.Count();
             var totalPages = (int)Math.Ceiling(totalCount / (double)parameters.PageSize);
 
-            // 5. Aplicar Paginação (Skip e Take)
+
             var pagedCustomers = queryable
-                .OrderByDescending(c => c.CreatedAt) // Ordenar pelos mais recentes
+                .OrderByDescending(c => c.CreatedAt) 
                 .Skip((parameters.Page - 1) * parameters.PageSize)
                 .Take(parameters.PageSize)
                 .ToList();
 
-            // 6. Mapear para DTOs e devolver o objeto paginado
+
             var items = _mapper.Map<List<CustomerResponseDto>>(pagedCustomers);
 
             return new PagedResultDto<CustomerResponseDto>
@@ -152,10 +150,10 @@ namespace CloudInvoice.Billing.Application.Services
 
         public async Task<IEnumerable<CustomerResponseDto>> GetAllActiveCustomersAsync()
         {
-            // 1. Vai buscar todos os clientes ao repositório
+
             var customers = await _customerRepository.GetAllAsync();
 
-            // 2. Filtra apenas os ativos e mapeia para o DTO de resposta
+
             return _mapper.Map<IEnumerable<CustomerResponseDto>>(
                 customers.Where(c => c.IsActive));
         }
