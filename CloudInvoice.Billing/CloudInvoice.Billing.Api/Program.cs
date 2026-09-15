@@ -1,5 +1,6 @@
 
 using CloudInvoice.Billing.Application.Interfaces;
+using CloudInvoice.Billing.Application.Mappings;
 using CloudInvoice.Billing.Application.Services;
 using CloudInvoice.Billing.Domain.Interfaces;
 using CloudInvoice.Billing.Infrastructure.Data;
@@ -11,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace CloudInvoice.Billing.Api
 {
@@ -22,6 +24,15 @@ namespace CloudInvoice.Billing.Api
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddSingleton(sp =>
+                new MapperConfiguration(
+                    config => config.AddProfile<BillingMappingProfile>(),
+                    sp.GetRequiredService<ILoggerFactory>()));
+            builder.Services.AddSingleton<IMapper>(sp =>
+                new Mapper(
+                    sp.GetRequiredService<MapperConfiguration>(),
+                    sp.GetRequiredService));
 
             builder.Services.AddScoped<IInvoiceService, InvoiceService>();
             builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();

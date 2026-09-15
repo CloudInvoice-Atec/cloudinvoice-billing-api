@@ -2,6 +2,7 @@
 using CloudInvoice.Billing.Application.Interfaces;
 using CloudInvoice.Billing.Domain.Entities;
 using CloudInvoice.Billing.Domain.Interfaces;
+using AutoMapper;
 using System.Globalization;
 
 namespace CloudInvoice.Billing.Application.Services
@@ -10,11 +11,16 @@ namespace CloudInvoice.Billing.Application.Services
     {
         private readonly IInvoiceRepository _invoiceRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IMapper _mapper;
 
-        public DashboardService(IInvoiceRepository invoiceRepository, ICustomerRepository customerRepository)
+        public DashboardService(
+            IInvoiceRepository invoiceRepository,
+            ICustomerRepository customerRepository,
+            IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
             _customerRepository = customerRepository;
+            _mapper = mapper;
         }
 
         public async Task<DashboardOverviewDto> GetDashboardOverviewAsync()
@@ -47,15 +53,8 @@ namespace CloudInvoice.Billing.Application.Services
                 .Where(i => i.Status == InvoiceStatus.Issued) // 👈 Filtro adicionado aqui
                 .OrderByDescending(i => i.IssueDate)
                 .Take(5)
-                .Select(i => new RecentInvoiceDto
-                {
-                    Id = i.Id,
-                    InvoiceNumber = i.InvoiceNumber,
-                    CustomerName = i.Customer?.Name ?? "Desconhecido",
-                    IssueDate = i.IssueDate,
-                    TotalAmount = i.TotalAmount,
-                    Status = i.Status.ToString()
-                }).ToList();
+                .Select(i => _mapper.Map<RecentInvoiceDto>(i))
+                .ToList();
 
             // 4. Gráfico de Evolução (Últimos 6 meses)
             var chartData = invoicesList
