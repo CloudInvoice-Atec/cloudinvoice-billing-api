@@ -2,6 +2,7 @@
 using CloudInvoice.Billing.Application.Interfaces;
 using CloudInvoice.Billing.Domain.Entities;
 using CloudInvoice.Billing.Domain.Interfaces;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,17 +18,20 @@ namespace CloudInvoice.Billing.Application.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly ICompanyRepository _companyRepository;
         private readonly ICatalogIntegrationService _catalogIntegrationService;
+        private readonly IMapper _mapper;
 
         public InvoiceService(
             IInvoiceRepository invoiceRepository,
             ICustomerRepository customerRepository,
             ICompanyRepository companyRepository,
-            ICatalogIntegrationService catalogIntegrationService)
+            ICatalogIntegrationService catalogIntegrationService,
+            IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
             _customerRepository = customerRepository;
             _companyRepository = companyRepository;
             _catalogIntegrationService = catalogIntegrationService;
+            _mapper = mapper;
         }
 
         public async Task<InvoiceResponseDto> CreateInvoiceAsync(string userId, CreateInvoiceDto request)
@@ -47,33 +51,17 @@ namespace CloudInvoice.Billing.Application.Services
             }
 
             // 3. Initialize the Domain Entity (The actual Invoice)
-            var invoice = new Invoice
-            {
-                Id = Guid.NewGuid(),
-                InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}",
-                Reference = request.Reference,
-                UserId = userId,
-                IssueDate = request.IssueDate,
-                DueDate = request.DueDate,
-
-                // Atribuição direta dos Enums do Domínio (Type Safety)
-                Status = request.Status,
-                PaymentStatus = request.PaymentStatus,
-                Notes = request.Notes,
-
-                // Active Relationships
-                CustomerId = customer.Id,
-
-                // Data Immutability: Freezing the data at the time of purchase
-                CustomerName = customer.Name,
-                CustomerTaxNumber = customer.TaxId,
-                CustomerAddress = customer.Address,
-
-                // Ajustado para as propriedades reais da entidade Company (Name em vez de LegalName)
-                CompanyName = company.Name,
-                CompanyTaxNumber = company.TaxNumber,
-                CompanyAddress = company.Address
-            };
+            var invoice = _mapper.Map<Invoice>(request);
+            invoice.Id = Guid.NewGuid();
+            invoice.InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}";
+            invoice.UserId = userId;
+            invoice.CustomerId = customer.Id;
+            invoice.CustomerName = customer.Name;
+            invoice.CustomerTaxNumber = customer.TaxId;
+            invoice.CustomerAddress = customer.Address ?? string.Empty;
+            invoice.CompanyName = company.Name;
+            invoice.CompanyTaxNumber = company.TaxNumber;
+            invoice.CompanyAddress = company.Address ?? string.Empty;
             // 4. Process each item in the request DTO
 
             decimal sumTotalBase = 0;
@@ -111,17 +99,12 @@ namespace CloudInvoice.Billing.Application.Services
 
 
                 // Map data to the Domain Entity (InvoiceLine)
-                var invoiceLine = new InvoiceLine
-                {
-                    Id = Guid.NewGuid(),
-                    InvoiceId = invoice.Id,
-                    ProductId = itemDto.ProductId,
-                    Description = availability.ProductDescription,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = unitPrice,
-                    TaxRate = taxRate,
-                    DiscountPercentage = discountPercentage
-                };
+                var invoiceLine = _mapper.Map<InvoiceLine>(itemDto);
+                invoiceLine.Id = Guid.NewGuid();
+                invoiceLine.InvoiceId = invoice.Id;
+                invoiceLine.Description = availability.ProductDescription;
+                invoiceLine.UnitPrice = unitPrice;
+                invoiceLine.TaxRate = taxRate;
 
                 invoice.Lines.Add(invoiceLine);
             }
@@ -135,7 +118,7 @@ namespace CloudInvoice.Billing.Application.Services
             await _invoiceRepository.AddAsync(invoice);
             await _invoiceRepository.SaveChangesAsync();
 
-            return MapToResponseDto(invoice);
+            return _mapper.Map<InvoiceResponseDto>(invoice);
         }
 
 
@@ -165,21 +148,16 @@ namespace CloudInvoice.Billing.Application.Services
                 await _invoiceRepository.SaveChangesAsync();
             }
 
-            invoice.Reference = request.Reference;
-            invoice.DueDate = request.DueDate;
-            invoice.Status = request.Status;
-            invoice.PaymentStatus = request.PaymentStatus;
-            invoice.Notes = request.Notes;
-            invoice.IssueDate = request.IssueDate;
+            _mapper.Map(request, invoice);
 
             invoice.CustomerId = customer.Id;
             invoice.CustomerName = customer.Name;
             invoice.CustomerTaxNumber = customer.TaxId;
-            invoice.CustomerAddress = customer.Address;
+            invoice.CustomerAddress = customer.Address ?? string.Empty;
 
             invoice.CompanyName = company.Name;
             invoice.CompanyTaxNumber = company.TaxNumber;
-            invoice.CompanyAddress = company.Address;
+            invoice.CompanyAddress = company.Address ?? string.Empty;
 
 
             decimal sumTotalBase = 0;
@@ -195,17 +173,12 @@ namespace CloudInvoice.Billing.Application.Services
                 decimal unitPrice = itemDto.BasePrice > 0 ? itemDto.BasePrice : availability.BasePrice;
                 decimal taxRate = itemDto.TaxRate > 0 ? itemDto.TaxRate : availability.TaxRate;
 
-                var invoiceLine = new InvoiceLine
-                {
-                    Id = Guid.NewGuid(),
-                    InvoiceId = invoice.Id,
-                    ProductId = itemDto.ProductId,
-                    Description = availability.ProductDescription,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = unitPrice,
-                    DiscountPercentage = itemDto.DiscountPercentage,
-                    TaxRate = taxRate
-                };
+                var invoiceLine = _mapper.Map<InvoiceLine>(itemDto);
+                invoiceLine.Id = Guid.NewGuid();
+                invoiceLine.InvoiceId = invoice.Id;
+                invoiceLine.Description = availability.ProductDescription;
+                invoiceLine.UnitPrice = unitPrice;
+                invoiceLine.TaxRate = taxRate;
 
                 // Matemática
                 decimal bruto = invoiceLine.Quantity * invoiceLine.UnitPrice;
@@ -230,7 +203,7 @@ namespace CloudInvoice.Billing.Application.Services
 
             await _invoiceRepository.SaveChangesAsync();
 
-            return MapToResponseDto(invoice);
+            return _mapper.Map<InvoiceResponseDto>(invoice);
         }
 
         public async Task<bool> DeleteInvoiceAsync(Guid invoiceId)
@@ -255,7 +228,7 @@ namespace CloudInvoice.Billing.Application.Services
         public async Task<IEnumerable<InvoiceResponseDto>> GetUserInvoicesAsync(string userId)
         {
             var invoices = await _invoiceRepository.GetByUserIdAsync(userId);
-            return invoices.Select(MapToResponseDto);
+            return _mapper.Map<IEnumerable<InvoiceResponseDto>>(invoices);
         }
 
         public async Task<InvoiceResponseDto?> GetInvoiceByIdAsync(Guid invoiceId)
@@ -263,7 +236,7 @@ namespace CloudInvoice.Billing.Application.Services
             var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
             if (invoice == null) return null;
 
-            return MapToResponseDto(invoice);
+            return _mapper.Map<InvoiceResponseDto>(invoice);
         }
 
         public async Task<PagedResultDto<InvoiceResponseDto>> GetAllInvoicesAsync(int pageNumber, int pageSize)
@@ -274,7 +247,7 @@ namespace CloudInvoice.Billing.Application.Services
 
             var (invoices, totalCount) = await _invoiceRepository.GetPagedAsync(pageNumber, pageSize);
 
-            var invoiceDtos = invoices.Select(MapToResponseDto).ToList();
+            var invoiceDtos = _mapper.Map<List<InvoiceResponseDto>>(invoices);
 
             int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
@@ -289,44 +262,6 @@ namespace CloudInvoice.Billing.Application.Services
         }
 
 
-
-        private static InvoiceResponseDto MapToResponseDto(Invoice invoice)
-        {
-            return new InvoiceResponseDto
-            {
-                Id = invoice.Id,
-                InvoiceNumber = invoice.InvoiceNumber,
-                Reference = invoice.Reference,
-                IssueDate = invoice.IssueDate,
-                DueDate = invoice.DueDate,
-                Status = invoice.Status,
-                PaymentStatus = invoice.PaymentStatus,
-                Notes = invoice.Notes,
-                CustomerId = invoice.CustomerId,
-                CustomerName = invoice.CustomerName,
-                CustomerTaxNumber = invoice.CustomerTaxNumber,
-                CustomerAddress = invoice.CustomerAddress,
-                CompanyName = invoice.CompanyName,
-                CompanyTaxNumber = invoice.CompanyTaxNumber,
-                CompanyAddress = invoice.CompanyAddress,
-                TotalBase = invoice.TotalBase,
-                TotalTax = invoice.TotalTax,
-                TotalAmount = invoice.TotalAmount,
-
-                Lines = invoice.Lines.Select(line => new InvoiceLineResponseDto
-                {
-                    Id = line.Id,
-                    ProductId = line.ProductId,
-                    Description = line.Description,
-                    Quantity = line.Quantity,
-                    UnitPrice = line.UnitPrice,
-                    DiscountPercentage = line.DiscountPercentage,
-                    TaxRate = line.TaxRate,
-                    TaxAmount = line.TaxAmount,
-                    LineTotal = line.LineTotal
-                }).ToList()
-            };
-        }
 
         public async Task<bool> CancelInvoiceAsync(Guid id)
         {
