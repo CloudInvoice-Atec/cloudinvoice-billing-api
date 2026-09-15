@@ -17,7 +17,11 @@ namespace CloudInvoice.Billing.Api.Controllers
             _companyService = companyService;
         }
 
-
+        /// <summary>
+        /// Get a company by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the company to retrieve.</param>
+        /// <returns></returns>
         [HttpGet("{id:int}")]
         [Authorize]
         public async Task<ActionResult<CompanyResponseDto>> GetById(int id)
@@ -28,6 +32,13 @@ namespace CloudInvoice.Billing.Api.Controllers
             return Ok(company);
         }
 
+
+        /// <summary>
+        /// Update a company by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the company to update.</param>
+        /// <param name="request">The updated company information.</param>
+        /// <returns></returns>
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCompanyDto request)
         {
